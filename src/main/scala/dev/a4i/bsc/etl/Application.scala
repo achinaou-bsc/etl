@@ -1,6 +1,10 @@
 package dev.a4i.bsc.etl
 
-object Application:
+import zio.Console
+import zio.ZIO
+import zio.ZIOAppDefault
 
-  def main(args: Array[String]): Unit =
-    println("Hello, World!")
+object Application extends ZIOAppDefault:
+
+  def run: ZIO[Any, Any, Any] =
+    Console.printLine("Hello, World!")

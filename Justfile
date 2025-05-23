@@ -8,7 +8,7 @@ format:
   scala fmt .
 
 run:
-  scala --power run .
+  scala run .
 
 clean:
   rm -rf dist
