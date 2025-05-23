@@ -6,3 +6,5 @@
 //> using options -deprecation -feature
 //> using options -explain -explain-types
 //> using options -Wsafe-init -Wvalue-discard -Wunused:all
+
+//> using dep dev.zio::zio:2.1.18
