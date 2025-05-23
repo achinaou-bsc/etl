@@ -1,0 +1,41 @@
+name: Submit Dependency Graph
+
+on:
+  workflow_run:
+    workflows: CI
+    branches: master
+    types: completed
+
+jobs:
+  submit-dependency-graph:
+    name: Submit Dependency Graph
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    timeout-minutes: 10
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          path: repository
+
+      - name: Set up Scala Cache
+        uses: coursier/cache-action@v6
+
+      - name: Set up Scala and SBT
+        uses: coursier/setup-action@v1
+        with:
+          jvm: temurin:24
+          apps: scala:3.7.0 sbt:1.10.7
+
+      - name: Convert Project to SBT
+        run: |
+          scala --power export --sbt --output /tmp/export-sbt repository
+          rm --recursive --force repository
+          cp --recursive /tmp/export-sbt/* .
+          rm --recursive --force /tmp/export-sbt
+
+      - name: Submit Dependency Graph
+        uses: scalacenter/sbt-dependency-submission@v2
