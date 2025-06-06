@@ -1,4 +1,4 @@
-//> using scala 3.7.0
+//> using scala 3.7.1
 //> using jvm temurin:24
 
 //> using options -language:strictEquality
