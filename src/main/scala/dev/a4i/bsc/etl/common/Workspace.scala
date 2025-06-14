@@ -1,12 +1,10 @@
 package dev.a4i.bsc.etl.common
 
+import java.io.IOException
 import java.util.UUID
 
 import os.Path
-import zio.UIO
-import zio.ULayer
-import zio.ZIO
-import zio.ZLayer
+import zio.*
 
 import dev.a4i.bsc.etl.Configuration
 
@@ -14,15 +12,15 @@ case class Workspace private (id: UUID, path: Path)
 
 object Workspace:
 
-  def layer: ULayer[Workspace] =
+  def layer: Layer[Config.Error | IOException, Workspace] =
     ZLayer.scoped(ZIO.acquireRelease(create)(delete))
 
-  private def create: UIO[Workspace] =
+  private def create: IO[Config.Error | IOException, Workspace] =
     for
-      configuration <- ZIO.config[Configuration].orDie
+      configuration <- ZIO.config[Configuration]
       id             = UUID.randomUUID
       path           = configuration.workspaces / id.toString
-      _             <- ZIO.attemptBlockingIO(os.makeDir.all(path)).orDie
+      _             <- ZIO.attemptBlockingIO(os.makeDir.all(path))
     yield Workspace(id, path)
 
   private def delete(workspace: Workspace): UIO[Unit] =
