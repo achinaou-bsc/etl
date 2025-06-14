@@ -12,6 +12,7 @@ import org.geotools.data.simple.SimpleFeatureCollection
 import org.geotools.gce.geotiff.GeoTiffReader
 import org.geotools.process.ProcessException
 import org.geotools.process.raster.PolygonExtractionProcess
+import org.jaitools.numeric.Range
 import os.Path
 import zio.*
 
@@ -49,6 +50,8 @@ class TemperatureTransformationService:
     ZIO.attemptBlockingIO(GeoTiffReader(rasterFile.toIO).read(Array.empty[GeneralParameterValue]))
 
   private def vectorize(coverage: GridCoverage2D): IO[ProcessException, SimpleFeatureCollection] =
+    val classificationRanges: List[Range[Integer]] = List()
+
     ZIO
       .attempt:
         PolygonExtractionProcess().execute(
@@ -57,7 +60,7 @@ class TemperatureTransformationService:
           true,
           null,
           List.empty.asJava,
-          List.empty.asJava,
+          classificationRanges.asJava,
           null
         )
       .refineToOrDie[ProcessException]
