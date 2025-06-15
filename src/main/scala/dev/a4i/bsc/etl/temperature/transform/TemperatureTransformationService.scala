@@ -52,7 +52,14 @@ class TemperatureTransformationService:
     yield vectorFile
 
   private def readRasterFile(rasterFile: Path): IO[IOException, GridCoverage2D] =
-    ZIO.attemptBlockingIO(GeoTiffReader(rasterFile.toIO).read(Array.empty[GeneralParameterValue]))
+    val acquireReader: IO[IOException, GeoTiffReader] = ZIO.attemptBlockingIO(GeoTiffReader(rasterFile.toIO))
+    val releaseReader: GeoTiffReader => UIO[Unit]     = reader => ZIO.succeed(reader.dispose())
+
+    ZIO.scoped:
+      for
+        reader: GeoTiffReader    <- ZIO.acquireRelease(acquireReader)(releaseReader)
+        coverage: GridCoverage2D <- ZIO.attemptBlockingIO(reader.read(Array.empty[GeneralParameterValue]))
+      yield coverage
 
   private def vectorize(coverage: GridCoverage2D): IO[ProcessException, SimpleFeatureCollection] =
     val classificationRanges: List[Range[Integer]] = List()
