@@ -2,7 +2,8 @@ package dev.a4i.bsc.etl.temperature.extract
 
 import java.io.IOException
 
-import os.{Path, *}
+import os.*
+import os.Path
 import zio.*
 import zio.http.*
 import zio.stream.ZSink
