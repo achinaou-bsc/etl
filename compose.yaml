@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgis/postgis:17-3.5-alpine
+    container_name: ${ETL_DATABASE_NAME}-postgres
+    environment:
+      POSTGRES_USER: ${ETL_DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${ETL_DATABASE_PASSWORD}
+      POSTGRES_DB: ${ETL_DATABASE_NAME}
+    ports:
+      - "${ETL_DATABASE_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      retries: 5
+      timeout: 5s
+
+volumes:
+  postgres-data:

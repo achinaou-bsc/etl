@@ -1,3 +1,5 @@
+set dotenv-load
+
 default:
   @just --list --unsorted
 
@@ -11,7 +13,7 @@ run:
   scala run .
 
 clean:
-  rm -rf dist
+  rm --recursive --force dist
   scala clean .
 
 compile:
@@ -30,3 +32,20 @@ package:
       .
 
   mv etl.jar dist
+
+local-env ENVIRONMENT:
+  cp .env.d/{{ENVIRONMENT}}.env .env
+
+local-env-create:
+  docker compose up --detach
+
+local-env-start:
+  docker compose start
+
+local-env-stop:
+  docker compose stop
+
+local-env-destroy:
+  docker compose down --volumes
+
+local-env-reset: local-env-destroy local-env-create

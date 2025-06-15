@@ -20,3 +20,6 @@
 //> using dep org.geotools:gt-geotiff:33.1
 //> using dep org.geotools:gt-geojson-core:33.1
 //> using dep org.geotools:gt-process-raster:33.1
+
+//> using dep com.augustnagro::magnumzio:2.0.0-M2
+//> using dep org.postgresql:postgresql:42.7.7

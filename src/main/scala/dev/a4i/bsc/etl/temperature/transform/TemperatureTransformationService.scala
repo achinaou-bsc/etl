@@ -38,18 +38,20 @@ class TemperatureTransformationService:
     val rasterFileExtensions: Set[String] = Set("tif", "tiff")
 
     ZIO.attemptBlockingIO:
-      walk(directory).filter(file => rasterFileExtensions.contains(file.ext.toLowerCase(Locale.ROOT)))
+      walk(directory)
+        .filter(isFile)
+        .filter(file => rasterFileExtensions.contains(file.ext.toLowerCase(Locale.ROOT)))
 
   private def vectorizeFile(vectorizedDirectory: Path)(rasterFile: Path): IO[IOException | ProcessException, Path] =
     val vectorFile: Path = vectorizedDirectory / s"${rasterFile.baseName}.geojson"
 
     for
-      coverage: GridCoverage2D                   <- readRaster(rasterFile)
+      coverage: GridCoverage2D                   <- readRasterFile(rasterFile)
       featureCollection: SimpleFeatureCollection <- vectorize(coverage)
-      _                                          <- writeVector(vectorFile)(featureCollection)
+      _                                          <- writeVectorFile(vectorFile)(featureCollection)
     yield vectorFile
 
-  private def readRaster(rasterFile: Path): IO[IOException, GridCoverage2D] =
+  private def readRasterFile(rasterFile: Path): IO[IOException, GridCoverage2D] =
     ZIO.attemptBlockingIO(GeoTiffReader(rasterFile.toIO).read(Array.empty[GeneralParameterValue]))
 
   private def vectorize(coverage: GridCoverage2D): IO[ProcessException, SimpleFeatureCollection] =
@@ -68,7 +70,7 @@ class TemperatureTransformationService:
         )
       .refineToOrDie[ProcessException]
 
-  private def writeVector(vectorFile: Path)(featureCollection: SimpleFeatureCollection): IO[IOException, Path] =
+  private def writeVectorFile(vectorFile: Path)(featureCollection: SimpleFeatureCollection): IO[IOException, Path] =
     ZIO.scoped:
       for
         outputStream: OutputStream <- ZIO.fromAutoCloseable(ZIO.attemptBlockingIO(write.over.outputStream(vectorFile)))
