@@ -2,7 +2,7 @@ package dev.a4i.bsc.etl.temperature.extract
 
 import java.io.IOException
 
-import os.Path
+import os.{Path, *}
 import zio.*
 import zio.http.*
 import zio.stream.ZSink
@@ -31,6 +31,6 @@ class TemperatureExtractionService(client: Client) extends ExtractionService:
     for
       workspace: Workspace <- ZIO.service[Workspace]
       directory: Path       = workspace.path / archive.baseName
-      _                    <- ZIO.attemptBlockingIO(os.makeDir.all(directory))
-      _                    <- ZIO.attemptBlockingIO(os.unzip(archive, directory))
+      _                    <- ZIO.attemptBlockingIO(makeDir.all(directory))
+      _                    <- ZIO.attemptBlockingIO(unzip(archive, directory))
     yield directory
