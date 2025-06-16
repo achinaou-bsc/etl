@@ -27,3 +27,5 @@
 
 //> using dep dev.zio::zio-logging-slf4j2:2.5.0
 //> using dep ch.qos.logback:logback-classic:1.5.18
+
+//> using resourceDir src/main/resources

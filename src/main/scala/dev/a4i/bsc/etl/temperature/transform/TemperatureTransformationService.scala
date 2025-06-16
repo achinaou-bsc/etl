@@ -23,33 +23,37 @@ class TemperatureTransformationService extends TransformationService:
 
   def transform(rasterDirectory: Path): ZIO[Workspace, IOException | ProcessException, Path] =
     for
+      _                      <- ZIO.log("Transforming: Temperature")
       vectorDirectory: Path  <- createVectorDirectory(rasterDirectory)
       rasterFiles: Seq[Path] <- findRasterFiles(rasterDirectory)
       _                      <- ZIO.foreachDiscard(rasterFiles)(vectorizeFile(vectorDirectory))
+      _                      <- ZIO.log("Transformed: Temperature")
     yield vectorDirectory
 
   private def createVectorDirectory(rasterDirectory: Path): ZIO[Workspace, IOException, Path] =
     for
       workspace: Workspace <- ZIO.service[Workspace]
-      vectorDirectory: Path = workspace.path / s"${rasterDirectory.baseName}.vector"
+      vectorDirectory: Path = workspace.path / s"${rasterDirectory.last}.vector"
       _                    <- ZIO.attemptBlockingIO(makeDir.all(vectorDirectory))
     yield vectorDirectory
 
   private def findRasterFiles(directory: Path): IO[IOException, Seq[Path]] =
-    val rasterFileExtensions: Set[String] = Set("tif", "tiff")
+    val extensions: Set[String] = Set("tif", "tiff")
 
     ZIO.attemptBlockingIO:
       walk(directory)
         .filter(isFile)
-        .filter(file => rasterFileExtensions.contains(file.ext.toLowerCase(Locale.ROOT)))
+        .filter(file => extensions.contains(file.ext.toLowerCase(Locale.ROOT)))
 
   private def vectorizeFile(vectorizedDirectory: Path)(rasterFile: Path): IO[IOException | ProcessException, Path] =
     val vectorFile: Path = vectorizedDirectory / s"${rasterFile.baseName}.geojson"
 
     for
+      _                                          <- ZIO.log(s"Vectorizing: $rasterFile -> $vectorFile")
       coverage: GridCoverage2D                   <- readRasterFile(rasterFile)
       featureCollection: SimpleFeatureCollection <- vectorize(coverage)
       _                                          <- writeVectorFile(vectorFile)(featureCollection)
+      _                                          <- ZIO.log(s"Vectorized: $rasterFile -> $vectorFile")
     yield vectorFile
 
   private def readRasterFile(rasterFile: Path): IO[IOException, GridCoverage2D] =

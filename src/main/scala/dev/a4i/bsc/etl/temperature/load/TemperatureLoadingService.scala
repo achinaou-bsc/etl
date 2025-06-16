@@ -19,20 +19,29 @@ class TemperatureLoadingService(xa: TransactorZIO) extends LoadingService:
 
   def load(vectorDirectory: Path): ZIO[Any, Throwable, Unit] =
     for
+      _                      <- ZIO.log("Loading: Temperature")
       vectorFiles: Seq[Path] <- findVectorFiles(vectorDirectory)
-      _                      <- ZIO.foreachDiscard(vectorFiles): vectorFile =>
-                                  readVectorFile(vectorFile).flatMap(persistFeatures)
+      _                      <- ZIO.foreachDiscard(vectorFiles)(readAndPersist)
+      _                      <- ZIO.log("Loaded: Temperature")
     yield ()
 
   private def findVectorFiles(directory: Path): ZIO[Any, IOException, Seq[Path]] =
-    val vectorFileExtensions: Set[String] = Set("geojson")
+    val extensions: Set[String] = Set("geojson")
 
     ZIO.attemptBlockingIO:
       walk(directory)
         .filter(isFile)
-        .filter(file => vectorFileExtensions.contains(file.ext.toLowerCase(Locale.ROOT)))
+        .filter(file => extensions.contains(file.ext.toLowerCase(Locale.ROOT)))
 
-  private def readVectorFile(vectorFile: Path): ZIO[Any, IOException, SimpleFeatureCollection] =
+  private def readAndPersist(vectorFile: Path): Task[Unit] =
+    for
+      _                                          <- ZIO.log(s"Reading & Persisting: $vectorFile")
+      featureCollection: SimpleFeatureCollection <- readVectorFile(vectorFile)
+      _                                          <- persistFeatures(featureCollection)
+      _                                          <- ZIO.log(s"Read & Persisted: $vectorFile")
+    yield ()
+
+  private def readVectorFile(vectorFile: Path): IO[IOException, SimpleFeatureCollection] =
     ZIO.scoped:
       for
         inputStream: InputStream                   <- ZIO.fromAutoCloseable(ZIO.attemptBlockingIO(read.inputStream(vectorFile)))
