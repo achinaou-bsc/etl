@@ -1,15 +1,15 @@
 package dev.a4i.bsc.etl.temperature
 
+import com.augustnagro.magnum.magzio.TransactorZIO
 import os.*
 import zio.*
 import zio.http.URL
 
 import dev.a4i.bsc.etl.common.Workspace
+import dev.a4i.bsc.etl.configuration.Client
 import dev.a4i.bsc.etl.temperature.extract.TemperatureExtractionService
 import dev.a4i.bsc.etl.temperature.load.TemperatureLoadingService
 import dev.a4i.bsc.etl.temperature.transform.TemperatureTransformationService
-import dev.a4i.bsc.etl.configuration.Client
-import com.augustnagro.magnum.magzio.TransactorZIO
 
 class TemperatureETL(
     extractionService: TemperatureExtractionService,
