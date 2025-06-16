@@ -10,9 +10,6 @@ type DataSource = javax.sql.DataSource
 object DataSource:
 
   val layer: ULayer[DataSource] =
-    val jdbcUrl: Configuration => String = configuration =>
-      s"jdbc:postgresql://${configuration.host}:${configuration.port}/${configuration.name}?ApplicationName=achinaou-bsc-etl"
-
     ZLayer.scoped:
       ZIO.fromAutoCloseable:
         for
@@ -20,10 +17,14 @@ object DataSource:
           dataSource: HikariDataSource  = HikariDataSource:
                                             new HikariConfig:
                                               setDriverClassName(configuration.driver)
-                                              setJdbcUrl(jdbcUrl(configuration))
+                                              setJdbcUrl(configuration.jdbcUrl)
                                               setUsername(configuration.username)
                                               setPassword(configuration.password)
         yield dataSource
+
+  extension (configuration: Configuration)
+    def jdbcUrl: String =
+      s"jdbc:postgresql://${configuration.host}:${configuration.port}/${configuration.name}?ApplicationName=achinaou-bsc-etl"
 
   case class Configuration(
       driver: String,
