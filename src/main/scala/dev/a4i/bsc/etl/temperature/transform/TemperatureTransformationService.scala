@@ -17,8 +17,9 @@ import os.*
 import zio.*
 
 import dev.a4i.bsc.etl.common.Workspace
+import dev.a4i.bsc.etl.common.transform.TransformationService
 
-class TemperatureTransformationService:
+class TemperatureTransformationService extends TransformationService:
 
   def transform(rasterDirectory: Path): ZIO[Workspace, IOException | ProcessException, Path] =
     for
@@ -84,3 +85,8 @@ class TemperatureTransformationService:
         writer: GeoJSONWriter      <- ZIO.fromAutoCloseable(ZIO.attemptBlockingIO(GeoJSONWriter(outputStream)))
         _                          <- ZIO.attemptBlockingIO(writer.writeFeatureCollection(featureCollection))
       yield vectorFile
+
+object TemperatureTransformationService:
+
+  val layer: ZLayer[Any, Nothing, TemperatureTransformationService] =
+    ZLayer.derive[TemperatureTransformationService]

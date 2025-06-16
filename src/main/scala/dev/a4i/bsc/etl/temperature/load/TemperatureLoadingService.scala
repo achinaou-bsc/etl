@@ -13,7 +13,9 @@ import org.geotools.data.simple.SimpleFeatureIterator
 import os.*
 import zio.*
 
-class TemperatureLoadingService(xa: TransactorZIO):
+import dev.a4i.bsc.etl.common.load.LoadingService
+
+class TemperatureLoadingService(xa: TransactorZIO) extends LoadingService:
 
   def load(vectorDirectory: Path): ZIO[Any, Throwable, Unit] =
     for
@@ -45,5 +47,10 @@ class TemperatureLoadingService(xa: TransactorZIO):
         features: LazyList[SimpleFeature]       = LazyList.unfold(featureIterator): iterator =>
                                                     Option.when(iterator.hasNext)((iterator.next, iterator))
         _                                      <- ZIO.foreach(features): feature =>
-                                                    ??? // xa.transact(sql"???".update.run())
+                                                    ZIO.log(s"Persisting: ${feature}") // xa.transact(sql"???".update.run())
       yield ()
+
+object TemperatureLoadingService:
+
+  val layer: ZLayer[TransactorZIO, Nothing, TemperatureLoadingService] =
+    ZLayer.derive[TemperatureLoadingService]

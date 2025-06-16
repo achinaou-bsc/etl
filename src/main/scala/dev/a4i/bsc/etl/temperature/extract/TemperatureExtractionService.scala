@@ -35,3 +35,8 @@ class TemperatureExtractionService(client: Client) extends ExtractionService:
       _                    <- ZIO.attemptBlockingIO(makeDir.all(directory))
       _                    <- ZIO.attemptBlockingIO(unzip(archive, directory))
     yield directory
+
+object TemperatureExtractionService:
+
+  val layer: ZLayer[Client, Nothing, TemperatureExtractionService] =
+    ZLayer.derive[TemperatureExtractionService]

@@ -23,3 +23,7 @@
 
 //> using dep com.augustnagro::magnumzio:2.0.0-M2
 //> using dep org.postgresql:postgresql:42.7.7
+//> using dep com.zaxxer:HikariCP:6.3.0
+
+//> using dep dev.zio::zio-logging-slf4j2:2.5.0
+//> using dep ch.qos.logback:logback-classic:1.5.18

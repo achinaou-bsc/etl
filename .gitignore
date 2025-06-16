@@ -105,3 +105,8 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+### Project ###
+.env.d/*
+!.env.d/local.env
+.env
