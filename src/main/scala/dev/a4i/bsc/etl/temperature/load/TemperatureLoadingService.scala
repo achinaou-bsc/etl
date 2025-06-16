@@ -6,12 +6,12 @@ import java.util.Locale
 
 import com.augustnagro.magnum.magzio.*
 import com.augustnagro.magnum.sql
-import org.geotools.api.feature.simple.SimpleFeature
 import org.geotools.data.geojson.GeoJSONReader
 import org.geotools.data.simple.SimpleFeatureCollection
 import org.geotools.data.simple.SimpleFeatureIterator
 import os.*
 import zio.*
+import zio.stream.ZStream
 
 import dev.a4i.bsc.etl.common.load.LoadingService
 
@@ -53,10 +53,11 @@ class TemperatureLoadingService(xa: TransactorZIO) extends LoadingService:
     ZIO.scoped:
       for
         featureIterator: SimpleFeatureIterator <- ZIO.fromAutoCloseable(ZIO.succeed(featureCollection.features))
-        features: LazyList[SimpleFeature]       = LazyList.unfold(featureIterator): iterator =>
-                                                    Option.when(iterator.hasNext)((iterator.next, iterator))
-        _                                      <- ZIO.foreach(features): feature =>
-                                                    ZIO.log(s"Persisting: ${feature}") // xa.transact(sql"???".update.run())
+        _                                      <- ZStream
+                                                    .unfold(featureIterator): iterator =>
+                                                      Option.when(iterator.hasNext)((iterator.next, iterator))
+                                                    .runForeach: feature =>
+                                                      ZIO.log(s"Persisting: ${feature.getID}") // xa.transact(sql"???".update.run())
       yield ()
 
 object TemperatureLoadingService:
