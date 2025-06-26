@@ -1,4 +1,4 @@
-package dev.a4i.bsc.etl.common.extract
+package dev.a4i.bsc.etl.temperature.extract
 
 import zio.http.URL
 

@@ -1,4 +1,4 @@
-package dev.a4i.bsc.etl.temperature.extract
+package dev.a4i.bsc.etl.desertification.extract
 
 import java.io.IOException
 import scala.util.matching.Regex
@@ -12,18 +12,18 @@ import zio.stream.ZSink
 import dev.a4i.bsc.etl.common.Workspace
 import dev.a4i.bsc.etl.common.extract.ExtractionService
 
-class TemperatureExtractionService(client: Client) extends ExtractionService:
+class DesertificationExtractionService(client: Client) extends ExtractionService:
 
   def extract(url: URL): RIO[Workspace, Path] =
     for
-      _               <- ZIO.log("Extracting: Temperature")
+      _               <- ZIO.log("Extracting: Desertification")
       archive: Path   <- download(url)
       directory: Path <- unarchive(archive)
-      _               <- ZIO.log("Extracted: Temperature")
+      _               <- ZIO.log("Extracted: Desertification")
     yield directory
 
   private def download(url: URL): RIO[Workspace, Path] =
-    val filenameRegex: Regex = """.*; filename="?(.*)"?""".r
+    val filenameRegex: Regex = """.*; filename=(.*)""".r
 
     ZIO.scoped:
       for
@@ -51,7 +51,7 @@ class TemperatureExtractionService(client: Client) extends ExtractionService:
       _                    <- ZIO.log(s"Unarchived: $archive -> $directory")
     yield directory
 
-object TemperatureExtractionService:
+object DesertificationExtractionService:
 
-  val layer: ZLayer[Client, Nothing, TemperatureExtractionService] =
-    ZLayer.derive[TemperatureExtractionService]
+  val layer: ZLayer[Client, Nothing, DesertificationExtractionService] =
+    ZLayer.derive[DesertificationExtractionService]

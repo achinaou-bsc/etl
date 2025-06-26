@@ -4,10 +4,12 @@ import com.augustnagro.magnum.magzio.TransactorZIO
 import zio.*
 import zio.logging.backend.SLF4J
 
-import dev.a4i.bsc.etl.common.extract.TemperatureDataSources
 import dev.a4i.bsc.etl.configuration.Client
 import dev.a4i.bsc.etl.configuration.DataSource
+import dev.a4i.bsc.etl.desertification.DesertificationETL
+import dev.a4i.bsc.etl.desertification.extract.DesertificationDataSources
 import dev.a4i.bsc.etl.temperature.TemperatureETL
+import dev.a4i.bsc.etl.temperature.extract.TemperatureDataSources
 
 object Application extends ZIOAppDefault:
 
@@ -20,13 +22,16 @@ object Application extends ZIOAppDefault:
         Client.layer,
         DataSource.layer,
         TransactorZIO.layer,
+        DesertificationETL.layer,
         TemperatureETL.layer
       )
       .logError
       .exitCode
 
-  private lazy val program: ZIO[TemperatureETL, Throwable, Unit] =
+  private lazy val program: ZIO[DesertificationETL & TemperatureETL, Throwable, Unit] =
     for
-      temperatureETL: TemperatureETL <- ZIO.service[TemperatureETL]
-      _                              <- temperatureETL.etl(TemperatureDataSources.Average.Historical.tenMinutes)
+      desertificationETL: DesertificationETL <- ZIO.service[DesertificationETL]
+      _                                      <- desertificationETL.etl(DesertificationDataSources.url)
+      temperatureETL: TemperatureETL         <- ZIO.service[TemperatureETL]
+      _                                      <- temperatureETL.etl(TemperatureDataSources.Average.Historical.tenMinutes)
     yield ()

@@ -67,16 +67,7 @@ class TemperatureTransformationService extends TransformationService:
       yield coverage
 
   private def vectorize(coverage: GridCoverage2D): IO[ProcessException, SimpleFeatureCollection] =
-    val classificationRanges: List[Range[Integer]] =
-      List(
-        Range(Int.MinValue, true, 0, false),
-        Range(0, true, 10, false),
-        Range(10, true, 20, false),
-        Range(20, true, 30, false),
-        Range(30, true, 40, false),
-        Range(40, true, 50, false),
-        Range(50, true, Int.MaxValue, true)
-      )
+    val classificationRanges: List[Range[Integer]] = List()
 
     ZIO
       .attempt:

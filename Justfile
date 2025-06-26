@@ -33,7 +33,7 @@ package:
 
   mv etl.jar dist
 
-local-env ENVIRONMENT:
+env ENVIRONMENT:
   cp .env.d/{{ENVIRONMENT}}.env .env
 
 local-env-create:
