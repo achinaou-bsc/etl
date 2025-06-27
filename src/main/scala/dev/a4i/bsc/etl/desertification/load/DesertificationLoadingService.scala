@@ -8,6 +8,7 @@ import com.augustnagro.magnum.magzio.*
 import com.augustnagro.magnum.sql
 import org.geotools.api.data.DataStore
 import org.geotools.api.data.DataStoreFinder
+import org.geotools.api.data.SimpleFeatureSource
 import org.geotools.data.simple.SimpleFeatureCollection
 import org.geotools.data.simple.SimpleFeatureIterator
 import os.*
@@ -15,7 +16,6 @@ import zio.*
 import zio.stream.ZStream
 
 import dev.a4i.bsc.etl.common.load.LoadingService
-import org.geotools.api.data.SimpleFeatureSource
 
 class DesertificationLoadingService(xa: TransactorZIO) extends LoadingService:
 
