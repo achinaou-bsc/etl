@@ -10,7 +10,7 @@ import zio.stream.ZSink
 class DownloadService(client: Client):
 
   def download(url: URL, outputDirectory: Path): Task[Path] =
-    val filenameRegex: Regex = """.*; filename=(.*)""".r
+    val filenameRegex: Regex = """.*; filename="?(.*)"?""".r
 
     ZIO.scoped:
       for
