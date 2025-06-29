@@ -9,6 +9,8 @@ import zio.*
 import zio.http.URL
 
 import dev.a4i.bsc.etl.common.Workspace
+import dev.a4i.bsc.etl.common.extract.DownloadService
+import dev.a4i.bsc.etl.common.extract.UnarchivingService
 import dev.a4i.bsc.etl.common.load.PostGISFeatureWriterService
 import dev.a4i.bsc.etl.common.transform.GeoJSONWriterService
 import dev.a4i.bsc.etl.common.transform.RasterReaderService
@@ -18,8 +20,6 @@ import dev.a4i.bsc.etl.configuration.Client
 import dev.a4i.bsc.etl.temperature.extract.TemperatureExtractionService
 import dev.a4i.bsc.etl.temperature.load.TemperatureLoadingService
 import dev.a4i.bsc.etl.temperature.transform.TemperatureTransformationService
-import dev.a4i.bsc.etl.common.extract.DownloadService
-import dev.a4i.bsc.etl.common.extract.UnarchivingService
 
 class TemperatureETL(
     extractionService: TemperatureExtractionService,

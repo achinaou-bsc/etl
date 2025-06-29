@@ -6,15 +6,15 @@ import zio.*
 import zio.http.URL
 
 import dev.a4i.bsc.etl.common.Workspace
+import dev.a4i.bsc.etl.common.extract.DownloadService
+import dev.a4i.bsc.etl.common.extract.UnarchivingService
+import dev.a4i.bsc.etl.common.load.PostGISFeatureWriterService
 import dev.a4i.bsc.etl.common.transform.GeoJSONWriterService
 import dev.a4i.bsc.etl.common.transform.VectorReaderService
 import dev.a4i.bsc.etl.configuration.Client
 import dev.a4i.bsc.etl.desertification.extract.DesertificationExtractionService
 import dev.a4i.bsc.etl.desertification.load.DesertificationLoadingService
 import dev.a4i.bsc.etl.desertification.transform.DesertificationTransformationService
-import dev.a4i.bsc.etl.common.load.PostGISFeatureWriterService
-import dev.a4i.bsc.etl.common.extract.DownloadService
-import dev.a4i.bsc.etl.common.extract.UnarchivingService
 
 class DesertificationETL(
     extractionService: DesertificationExtractionService,

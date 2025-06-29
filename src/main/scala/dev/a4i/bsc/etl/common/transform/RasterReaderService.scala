@@ -2,12 +2,12 @@ package dev.a4i.bsc.etl.common.transform
 
 import java.io.IOException
 
-import os.Path
-import zio.*
+import org.geotools.api.parameter.GeneralParameterValue
 import org.geotools.coverage.grid.GridCoverage2D
 import org.geotools.coverage.grid.io.GridCoverage2DReader
 import org.geotools.coverage.grid.io.GridFormatFinder
-import org.geotools.api.parameter.GeneralParameterValue
+import os.Path
+import zio.*
 
 class RasterReaderService:
 
