@@ -1,76 +1,31 @@
 package dev.a4i.bsc.etl.temperature.load
 
-import java.io.IOException
-import java.net.URL
-import java.util.Locale
-import scala.jdk.CollectionConverters.*
-
 import com.augustnagro.magnum.magzio.*
-import com.augustnagro.magnum.sql
-import org.geotools.api.data.DataStore
-import org.geotools.api.data.DataStoreFinder
-import org.geotools.api.data.SimpleFeatureSource
 import org.geotools.data.simple.SimpleFeatureCollection
-import org.geotools.data.simple.SimpleFeatureIterator
 import os.*
 import zio.*
-import zio.stream.ZStream
 
 import dev.a4i.bsc.etl.common.load.LoadingService
+import dev.a4i.bsc.etl.common.load.PostGISFeatureWriterService
+import dev.a4i.bsc.etl.common.transform.VectorReaderService
 
-class TemperatureLoadingService(xa: TransactorZIO) extends LoadingService:
+class TemperatureLoadingService(
+    vectorReaderService: VectorReaderService,
+    postGISFeatureWriterService: PostGISFeatureWriterService
+) extends LoadingService:
 
-  def load(vectorDirectory: Path): ZIO[Any, Throwable, Unit] =
-    for
-      _                      <- ZIO.log("Loading: Temperature")
-      vectorFiles: Seq[Path] <- findVectorFiles(vectorDirectory)
-      _                      <- ZIO.foreachDiscard(vectorFiles)(readAndPersist)
-      _                      <- ZIO.log("Loaded: Temperature")
-    yield ()
-
-  private def findVectorFiles(directory: Path): ZIO[Any, IOException, Seq[Path]] =
-    val extensions: Set[String] = Set("geojson")
-
-    ZIO.attemptBlockingIO:
-      walk(directory)
-        .filter(isFile)
-        .filter(file => extensions.contains(file.ext.toLowerCase(Locale.ROOT)))
-
-  private def readAndPersist(vectorFile: Path): Task[Unit] =
+  def load(vectorFile: Path): ZIO[Any, Throwable, Unit] =
     ZIO.scoped:
       for
         _                                          <- ZIO.log(s"Reading & Persisting: $vectorFile")
-        featureCollection: SimpleFeatureCollection <- readVectorFile(vectorFile)
-        _                                          <- persistFeatures(featureCollection)
+        featureCollection: SimpleFeatureCollection <- vectorReaderService.read(vectorFile)
+        _                                          <- postGISFeatureWriterService.write(featureCollection)
         _                                          <- ZIO.log(s"Read & Persisted: $vectorFile")
       yield ()
 
-  private def readVectorFile(vectorFile: Path): ZIO[Scope, IOException, SimpleFeatureCollection] =
-    val dataStoreZIO: ZIO[Scope, IOException, DataStore] =
-      val parameters: Map[String, URL]        = Map("url" -> vectorFile.toNIO.toUri.toURL)
-      val acquire: IO[IOException, DataStore] = ZIO.attemptBlockingIO(DataStoreFinder.getDataStore(parameters.asJava))
-      val release: DataStore => UIO[Unit]     = dataStore => ZIO.succeed(dataStore.dispose())
-
-      ZIO.acquireRelease(acquire)(release)
-
-    for
-      dataStore: DataStore                       <- dataStoreZIO
-      typeName: String                           <- ZIO.attemptBlockingIO(dataStore.getTypeNames.head)
-      source: SimpleFeatureSource                <- ZIO.attemptBlockingIO(dataStore.getFeatureSource(typeName))
-      featureCollection: SimpleFeatureCollection <- ZIO.attemptBlockingIO(source.getFeatures())
-    yield featureCollection
-
-  private def persistFeatures(featureCollection: SimpleFeatureCollection): RIO[Scope, Unit] =
-    for
-      featureIterator: SimpleFeatureIterator <- ZIO.fromAutoCloseable(ZIO.succeed(featureCollection.features))
-      _                                      <- ZStream
-                                                  .unfold(featureIterator): iterator =>
-                                                    Option.when(iterator.hasNext)((iterator.next, iterator))
-                                                  .runForeach: feature =>
-                                                    ZIO.log(s"Persisting: ${feature.getID}") // xa.transact(sql"???".update.run())
-    yield ()
-
 object TemperatureLoadingService:
 
-  val layer: ZLayer[TransactorZIO, Nothing, TemperatureLoadingService] =
+  type Dependencies = VectorReaderService & PostGISFeatureWriterService & TransactorZIO
+
+  val layer: URLayer[Dependencies, TemperatureLoadingService] =
     ZLayer.derive[TemperatureLoadingService]
