@@ -1,6 +1,5 @@
 package dev.a4i.bsc.etl.temperature.load
 
-import com.augustnagro.magnum.magzio.*
 import org.geotools.data.simple.SimpleFeatureCollection
 import os.*
 import zio.*
@@ -19,13 +18,13 @@ class TemperatureLoadingService(
       for
         _                                          <- ZIO.log(s"Reading & Persisting: $vectorFile")
         featureCollection: SimpleFeatureCollection <- vectorReaderService.read(vectorFile)
-        _                                          <- postGISFeatureWriterService.write(featureCollection)
+        _                                          <- postGISFeatureWriterService.write("temperature", featureCollection)
         _                                          <- ZIO.log(s"Read & Persisted: $vectorFile")
       yield ()
 
 object TemperatureLoadingService:
 
-  type Dependencies = VectorReaderService & PostGISFeatureWriterService & TransactorZIO
+  type Dependencies = VectorReaderService & PostGISFeatureWriterService
 
   val layer: URLayer[Dependencies, TemperatureLoadingService] =
     ZLayer.derive[TemperatureLoadingService]

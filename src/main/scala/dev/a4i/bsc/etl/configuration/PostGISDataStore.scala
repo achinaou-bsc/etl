@@ -1,0 +1,59 @@
+package dev.a4i.bsc.etl.configuration
+
+import java.util.UUID
+import scala.jdk.CollectionConverters.*
+
+import org.geotools.api.data.DataStore
+import org.geotools.api.data.DataStoreFinder
+import org.geotools.data.DefaultTransaction
+import zio.*
+import zio.config.magnolia.deriveConfig
+
+type PostGISDataStore = DataStore
+
+object PostGISDataStore:
+
+  val transaction: URIO[Scope, DefaultTransaction] =
+    ZIO.acquireRelease(ZIO.succeed(DefaultTransaction(UUID.randomUUID.toString)))(tx => ZIO.succeed(tx.close()))
+
+  val layer: ULayer[PostGISDataStore] =
+    ZLayer.scoped:
+      for
+        configuration: Configuration <- ZIO.config[Configuration].orDie
+        parameters: Map[String, ?]    = Map(
+                                          "dbtype"              -> "postgis",
+                                          "host"                -> configuration.host,
+                                          "port"                -> configuration.port,
+                                          "schema"              -> "public",
+                                          "database"            -> configuration.name,
+                                          "user"                -> configuration.username,
+                                          "passwd"              -> configuration.password,
+                                          "preparedStatements"  -> true,
+                                          "encode functions"    -> true,
+                                          "Expose primary keys" -> true
+                                        )
+        dataStore: DataStore         <-
+          val acquire: UIO[DataStore] =
+            ZIO
+              .succeed(Option(DataStoreFinder.getDataStore(parameters.asJava)))
+              .flatMap:
+                case Some(dataSource: DataStore) => ZIO.succeed(dataSource)
+                case None                        => ZIO.die(RuntimeException("Could not instantiate a DataStore for PostGIS"))
+
+          val release: DataStore => UIO[Unit] = dataStore => ZIO.succeed(dataStore.dispose())
+
+          ZIO.acquireRelease(acquire)(release)
+      yield dataStore
+
+  case class Configuration(
+      driver: String,
+      host: String,
+      port: Int,
+      name: String,
+      username: String,
+      password: String
+  )
+
+  object Configuration:
+
+    given Config[Configuration] = deriveConfig.nested("database")

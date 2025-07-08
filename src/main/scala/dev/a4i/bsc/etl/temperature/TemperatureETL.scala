@@ -3,7 +3,6 @@ package dev.a4i.bsc.etl.temperature
 import java.io.IOException
 import java.util.Locale
 
-import com.augustnagro.magnum.magzio.TransactorZIO
 import os.*
 import zio.*
 import zio.http.URL
@@ -17,6 +16,7 @@ import dev.a4i.bsc.etl.common.transform.RasterReaderService
 import dev.a4i.bsc.etl.common.transform.RasterToVectorTransformationService
 import dev.a4i.bsc.etl.common.transform.VectorReaderService
 import dev.a4i.bsc.etl.configuration.Client
+import dev.a4i.bsc.etl.configuration.PostGISDataStore
 import dev.a4i.bsc.etl.temperature.extract.TemperatureExtractionService
 import dev.a4i.bsc.etl.temperature.load.TemperatureLoadingService
 import dev.a4i.bsc.etl.temperature.transform.TemperatureTransformationService
@@ -58,12 +58,13 @@ class TemperatureETL(
 
 object TemperatureETL:
 
-  private type Dependencies = Client & TransactorZIO
+  private type Dependencies = Client
 
   val layer: ZLayer[Dependencies, Nothing, TemperatureETL] =
     ZLayer.makeSome[Dependencies, TemperatureETL](
       DownloadService.layer,
       GeoJSONWriterService.layer,
+      PostGISDataStore.layer,
       PostGISFeatureWriterService.layer,
       RasterReaderService.layer,
       RasterToVectorTransformationService.layer,

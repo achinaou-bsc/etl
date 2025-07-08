@@ -18,7 +18,7 @@ class DesertificationLoadingService(
       for
         _                                          <- ZIO.log(s"Reading & Persisting: $vectorFile")
         featureCollection: SimpleFeatureCollection <- vectorReaderService.read(vectorFile)
-        _                                          <- postGISFeatureWriterService.write(featureCollection)
+        _                                          <- postGISFeatureWriterService.write("aridity", featureCollection)
         _                                          <- ZIO.log(s"Read & Persisted: $vectorFile")
       yield ()
 

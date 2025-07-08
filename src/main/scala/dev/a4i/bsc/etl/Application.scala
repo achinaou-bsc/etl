@@ -1,11 +1,9 @@
 package dev.a4i.bsc.etl
 
-import com.augustnagro.magnum.magzio.TransactorZIO
 import zio.*
 import zio.logging.backend.SLF4J
 
 import dev.a4i.bsc.etl.configuration.Client
-import dev.a4i.bsc.etl.configuration.DataSource
 import dev.a4i.bsc.etl.desertification.DesertificationETL
 import dev.a4i.bsc.etl.desertification.extract.DesertificationDataSources
 import dev.a4i.bsc.etl.temperature.TemperatureETL
@@ -20,8 +18,6 @@ object Application extends ZIOAppDefault:
     program
       .provide(
         Client.layer,
-        DataSource.layer,
-        TransactorZIO.layer,
         DesertificationETL.layer,
         TemperatureETL.layer
       )

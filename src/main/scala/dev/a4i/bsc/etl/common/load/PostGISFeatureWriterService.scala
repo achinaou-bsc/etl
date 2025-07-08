@@ -1,25 +1,45 @@
 package dev.a4i.bsc.etl.common.load
 
-import com.augustnagro.magnum.magzio.TransactorZIO
-import com.augustnagro.magnum.sql
+import java.io.IOException
+
+import org.geotools.api.data.SimpleFeatureStore
+import org.geotools.api.feature.simple.SimpleFeatureType
 import org.geotools.data.simple.SimpleFeatureCollection
-import org.geotools.data.simple.SimpleFeatureIterator
+import org.geotools.feature.simple.SimpleFeatureTypeBuilder
 import zio.*
-import zio.stream.ZStream
 
-class PostGISFeatureWriterService(xa: TransactorZIO):
+import dev.a4i.bsc.etl.configuration.PostGISDataStore
 
-  def write(featureCollection: SimpleFeatureCollection): URIO[Scope, Unit] =
+class PostGISFeatureWriterService(dataStore: PostGISDataStore):
+
+  def write(tableName: String, featureCollection: SimpleFeatureCollection): ZIO[Scope, IOException, Unit] =
     for
-      featureIterator: SimpleFeatureIterator <- ZIO.fromAutoCloseable(ZIO.succeed(featureCollection.features))
-      _                                      <- ZStream
-                                                  .unfold(featureIterator): iterator =>
-                                                    Option.when(iterator.hasNext)((iterator.next, iterator))
-                                                  .runForeach: feature =>
-                                                    ZIO.log(s"Persisting: ${feature.getID}") // xa.transact(sql"???".update.run())
+      _                                   <- ZIO.unit
+      sourceFeatureType: SimpleFeatureType = featureCollection.getSchema
+      targetFeatureType: SimpleFeatureType = getTargetFeatureType(tableName, sourceFeatureType)
+      _                                   <- createSchema(tableName, targetFeatureType)
+      featureStore: SimpleFeatureStore    <- ZIO.attemptBlockingIO:
+                                               dataStore
+                                                 .getFeatureSource(tableName)
+                                                 .asInstanceOf[SimpleFeatureStore]
+      _                                   <- ZIO.attemptBlockingIO:
+                                               featureStore.addFeatures(featureCollection)
     yield ()
+
+  private def getTargetFeatureType(tableName: String, sourceFeatureType: SimpleFeatureType): SimpleFeatureType =
+    val featureTypeBuilder = SimpleFeatureTypeBuilder()
+    featureTypeBuilder.init(sourceFeatureType)
+    featureTypeBuilder.setName(tableName)
+    featureTypeBuilder.buildFeatureType
+
+  private def createSchema(tableName: String, featureType: SimpleFeatureType): IO[IOException, Unit] =
+    ZIO.attemptBlockingIO:
+      if !dataStore.getTypeNames.contains(tableName)
+      then dataStore.createSchema(featureType)
 
 object PostGISFeatureWriterService:
 
-  val layer: URLayer[TransactorZIO, PostGISFeatureWriterService] =
+  type Dependencies = PostGISDataStore
+
+  val layer: URLayer[Dependencies, PostGISFeatureWriterService] =
     ZLayer.derive[PostGISFeatureWriterService]
