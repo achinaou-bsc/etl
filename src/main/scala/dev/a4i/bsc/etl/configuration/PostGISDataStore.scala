@@ -1,20 +1,15 @@
 package dev.a4i.bsc.etl.configuration
 
-import java.util.UUID
 import scala.jdk.CollectionConverters.*
 
 import org.geotools.api.data.DataStore
 import org.geotools.api.data.DataStoreFinder
-import org.geotools.data.DefaultTransaction
 import zio.*
 import zio.config.magnolia.deriveConfig
 
 type PostGISDataStore = DataStore
 
 object PostGISDataStore:
-
-  val transaction: URIO[Scope, DefaultTransaction] =
-    ZIO.acquireRelease(ZIO.succeed(DefaultTransaction(UUID.randomUUID.toString)))(tx => ZIO.succeed(tx.close()))
 
   val layer: ULayer[PostGISDataStore] =
     ZLayer.scoped:
