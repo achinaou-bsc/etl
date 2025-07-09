@@ -15,7 +15,7 @@ import dev.a4i.bsc.etl.common.transform.GeoJSONWriterService
 import dev.a4i.bsc.etl.common.transform.RasterReaderService
 import dev.a4i.bsc.etl.common.transform.RasterToVectorTransformationService
 import dev.a4i.bsc.etl.common.transform.VectorReaderService
-import dev.a4i.bsc.etl.configuration.Client
+import dev.a4i.bsc.etl.configuration.HttpClient
 import dev.a4i.bsc.etl.configuration.PostGISDataStore
 import dev.a4i.bsc.etl.temperature.extract.TemperatureExtractionService
 import dev.a4i.bsc.etl.temperature.load.TemperatureLoadingService
@@ -58,13 +58,12 @@ class TemperatureETL(
 
 object TemperatureETL:
 
-  private type Dependencies = Client
+  type Dependencies = HttpClient & PostGISDataStore
 
   val layer: ZLayer[Dependencies, Nothing, TemperatureETL] =
     ZLayer.makeSome[Dependencies, TemperatureETL](
       DownloadService.layer,
       GeoJSONWriterService.layer,
-      PostGISDataStore.layer,
       PostGISFeatureWriterService.layer,
       RasterReaderService.layer,
       RasterToVectorTransformationService.layer,

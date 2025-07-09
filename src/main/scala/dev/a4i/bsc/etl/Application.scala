@@ -3,7 +3,8 @@ package dev.a4i.bsc.etl
 import zio.*
 import zio.logging.backend.SLF4J
 
-import dev.a4i.bsc.etl.configuration.Client
+import dev.a4i.bsc.etl.configuration.HttpClient
+import dev.a4i.bsc.etl.configuration.PostGISDataStore
 import dev.a4i.bsc.etl.desertification.DesertificationETL
 import dev.a4i.bsc.etl.desertification.extract.DesertificationDataSources
 import dev.a4i.bsc.etl.temperature.TemperatureETL
@@ -17,7 +18,8 @@ object Application extends ZIOAppDefault:
   override val run: UIO[ExitCode] =
     program
       .provide(
-        Client.layer,
+        HttpClient.layer,
+        PostGISDataStore.layer,
         DesertificationETL.layer,
         TemperatureETL.layer
       )
@@ -26,8 +28,6 @@ object Application extends ZIOAppDefault:
 
   private lazy val program: ZIO[DesertificationETL & TemperatureETL, Throwable, Unit] =
     for
-      desertificationETL: DesertificationETL <- ZIO.service[DesertificationETL]
-      _                                      <- desertificationETL.etl(DesertificationDataSources.url)
-      temperatureETL: TemperatureETL         <- ZIO.service[TemperatureETL]
-      _                                      <- temperatureETL.etl(TemperatureDataSources.Average.Historical.tenMinutes)
+      _ <- ZIO.serviceWith[DesertificationETL](_.etl(DesertificationDataSources.url))
+      _ <- ZIO.serviceWith[TemperatureETL](_.etl(TemperatureDataSources.Average.Historical.tenMinutes))
     yield ()

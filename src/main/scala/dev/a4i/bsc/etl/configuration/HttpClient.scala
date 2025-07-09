@@ -4,13 +4,13 @@ import zio.*
 import zio.http.*
 import zio.http.netty.NettyConfig
 
-type Client = zio.http.Client
+type HttpClient = zio.http.Client
 
-object Client:
+object HttpClient:
 
-  val layer: ULayer[Client] =
+  val layer: ULayer[HttpClient] =
     ZLayer
-      .make[Client](
+      .make[HttpClient](
         ZLayer.succeed(ZClient.Config.default.idleTimeout(5.minutes).disabledConnectionPool),
         ZLayer.succeed(NettyConfig.default),
         DnsResolver.default,

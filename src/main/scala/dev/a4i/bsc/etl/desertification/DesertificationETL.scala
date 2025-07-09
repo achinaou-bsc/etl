@@ -10,7 +10,7 @@ import dev.a4i.bsc.etl.common.extract.UnarchivingService
 import dev.a4i.bsc.etl.common.load.PostGISFeatureWriterService
 import dev.a4i.bsc.etl.common.transform.GeoJSONWriterService
 import dev.a4i.bsc.etl.common.transform.VectorReaderService
-import dev.a4i.bsc.etl.configuration.Client
+import dev.a4i.bsc.etl.configuration.HttpClient
 import dev.a4i.bsc.etl.configuration.PostGISDataStore
 import dev.a4i.bsc.etl.desertification.extract.DesertificationExtractionService
 import dev.a4i.bsc.etl.desertification.load.DesertificationLoadingService
@@ -34,13 +34,12 @@ class DesertificationETL(
 
 object DesertificationETL:
 
-  private type Dependencies = Client
+  type Dependencies = HttpClient & PostGISDataStore
 
   val layer: ZLayer[Dependencies, Nothing, DesertificationETL] =
     ZLayer.makeSome[Dependencies, DesertificationETL](
       DownloadService.layer,
       GeoJSONWriterService.layer,
-      PostGISDataStore.layer,
       PostGISFeatureWriterService.layer,
       UnarchivingService.layer,
       VectorReaderService.layer,

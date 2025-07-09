@@ -7,7 +7,9 @@ import zio.*
 import zio.http.*
 import zio.stream.ZSink
 
-class DownloadService(client: Client):
+import dev.a4i.bsc.etl.configuration.HttpClient
+
+class DownloadService(client: HttpClient):
 
   def download(url: URL, outputDirectory: Path): Task[Path] =
     val filenameRegex: Regex = """.*; filename="?(.*)"?""".r
@@ -29,5 +31,5 @@ class DownloadService(client: Client):
 
 object DownloadService:
 
-  val layer: URLayer[Client, DownloadService] =
+  val layer: URLayer[HttpClient, DownloadService] =
     ZLayer.derive[DownloadService]
