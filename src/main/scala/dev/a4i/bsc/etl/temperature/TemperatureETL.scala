@@ -60,7 +60,7 @@ object TemperatureETL:
 
   type Dependencies = HttpClient & PostGISDataStore
 
-  val layer: ZLayer[Dependencies, Nothing, TemperatureETL] =
+  val layer: URLayer[Dependencies, TemperatureETL] =
     ZLayer.makeSome[Dependencies, TemperatureETL](
       DownloadService.layer,
       GeoJSONWriterService.layer,

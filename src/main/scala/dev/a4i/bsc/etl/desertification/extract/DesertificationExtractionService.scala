@@ -27,5 +27,5 @@ object DesertificationExtractionService:
 
   type Dependencies = DownloadService & UnarchivingService
 
-  val layer: ZLayer[Dependencies, Nothing, DesertificationExtractionService] =
+  val layer: URLayer[Dependencies, DesertificationExtractionService] =
     ZLayer.derive[DesertificationExtractionService]

@@ -36,7 +36,7 @@ object DesertificationETL:
 
   type Dependencies = HttpClient & PostGISDataStore
 
-  val layer: ZLayer[Dependencies, Nothing, DesertificationETL] =
+  val layer: URLayer[Dependencies, DesertificationETL] =
     ZLayer.makeSome[Dependencies, DesertificationETL](
       DownloadService.layer,
       GeoJSONWriterService.layer,

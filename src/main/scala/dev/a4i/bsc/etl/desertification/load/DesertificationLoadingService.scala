@@ -26,5 +26,5 @@ object DesertificationLoadingService:
 
   type Dependencies = VectorReaderService & PostGISFeatureWriterService
 
-  val layer: ZLayer[Dependencies, Nothing, DesertificationLoadingService] =
+  val layer: URLayer[Dependencies, DesertificationLoadingService] =
     ZLayer.derive[DesertificationLoadingService]
