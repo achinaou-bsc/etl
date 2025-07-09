@@ -42,13 +42,22 @@ class PostGISFeatureWriterService(dataStore: PostGISDataStore):
       then dataStore.createSchema(featureType)
 
   private def usingTransaction[R, E, A](use: DefaultTransaction => ZIO[R, E, A]): ZIO[R, E, A] =
-    val acquire: UIO[DefaultTransaction]         = ZIO.succeed(DefaultTransaction(UUID.randomUUID.toString))
-    val release: DefaultTransaction => UIO[Unit] = transaction => ZIO.succeed(transaction.close())
+    val acquire: UIO[DefaultTransaction] = ZIO.succeed(DefaultTransaction(UUID.randomUUID.toString))
 
-    ZIO.acquireReleaseWith(acquire)(release): transaction =>
-      use(transaction)
-        .zipLeft(ZIO.succeed(transaction.commit()))
-        .onError(_ => ZIO.succeed(transaction.rollback()))
+    val commitRelease: DefaultTransaction => UIO[Unit] = transaction =>
+      ZIO.succeed:
+        transaction.commit()
+        transaction.close()
+
+    val rollbackRelease: DefaultTransaction => UIO[Unit] = transaction =>
+      ZIO.succeed:
+        transaction.rollback()
+        transaction.close()
+
+    val release: (DefaultTransaction, Exit[E, A]) => UIO[Unit] = (transaction, exit) =>
+      exit.foldZIO(_ => rollbackRelease(transaction), _ => commitRelease(transaction))
+
+    ZIO.acquireReleaseExitWith(acquire)(release)(use)
 
 object PostGISFeatureWriterService:
 
