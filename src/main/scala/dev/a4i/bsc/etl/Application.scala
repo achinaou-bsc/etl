@@ -5,10 +5,8 @@ import zio.logging.backend.SLF4J
 
 import dev.a4i.bsc.etl.configuration.HttpClient
 import dev.a4i.bsc.etl.configuration.PostGISDataStore
-import dev.a4i.bsc.etl.desertification.DesertificationETL
-import dev.a4i.bsc.etl.desertification.extract.DesertificationDataSources
-import dev.a4i.bsc.etl.temperature.TemperatureETL
-import dev.a4i.bsc.etl.temperature.extract.TemperatureDataSources
+import dev.a4i.bsc.etl.wad.WADAridityETL
+import dev.a4i.bsc.etl.worldclim.WorldClimHistoricalTemperatureETL
 
 object Application extends ZIOAppDefault:
 
@@ -20,14 +18,14 @@ object Application extends ZIOAppDefault:
       .provide(
         HttpClient.layer,
         PostGISDataStore.layer,
-        DesertificationETL.layer,
-        TemperatureETL.layer
+        WADAridityETL.layer,
+        WorldClimHistoricalTemperatureETL.layer
       )
       .logError
       .exitCode
 
-  private lazy val program: ZIO[DesertificationETL & TemperatureETL, Throwable, Unit] =
+  private lazy val program: ZIO[WADAridityETL & WorldClimHistoricalTemperatureETL, Throwable, Unit] =
     for
-      _ <- ZIO.serviceWith[DesertificationETL](_.etl(DesertificationDataSources.url))
-      _ <- ZIO.serviceWith[TemperatureETL](_.etl(TemperatureDataSources.Average.Historical.tenMinutes))
+      _ <- ZIO.serviceWith[WADAridityETL](_.etl)
+      _ <- ZIO.serviceWith[WorldClimHistoricalTemperatureETL](_.etl)
     yield ()

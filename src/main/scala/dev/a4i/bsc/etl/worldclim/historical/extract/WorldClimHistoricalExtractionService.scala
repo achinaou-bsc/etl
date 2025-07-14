@@ -1,4 +1,4 @@
-package dev.a4i.bsc.etl.temperature.extract
+package dev.a4i.bsc.etl.worldclim.historical.extract
 
 import os.*
 import zio.*
@@ -9,7 +9,7 @@ import dev.a4i.bsc.etl.common.extract.DownloadService
 import dev.a4i.bsc.etl.common.extract.ExtractionService
 import dev.a4i.bsc.etl.common.extract.UnarchivingService
 
-class TemperatureExtractionService(
+class WorldClimHistoricalExtractionService(
     downloadService: DownloadService,
     unarchivingService: UnarchivingService
 ) extends ExtractionService:
@@ -23,9 +23,9 @@ class TemperatureExtractionService(
       _                    <- ZIO.log("Extracted: Temperature")
     yield directory
 
-object TemperatureExtractionService:
+object WorldClimHistoricalExtractionService:
 
   type Dependencies = DownloadService & UnarchivingService
 
-  val layer: ZLayer[Dependencies, Nothing, TemperatureExtractionService] =
-    ZLayer.derive[TemperatureExtractionService]
+  val layer: ZLayer[Dependencies, Nothing, WorldClimHistoricalExtractionService] =
+    ZLayer.derive[WorldClimHistoricalExtractionService]

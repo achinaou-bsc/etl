@@ -1,4 +1,4 @@
-package dev.a4i.bsc.etl.desertification.transform
+package dev.a4i.bsc.etl.wad.aridity.transform
 
 import java.io.IOException
 import java.util.Locale
@@ -11,19 +11,19 @@ import dev.a4i.bsc.etl.common.transform.GeoJSONWriterService
 import dev.a4i.bsc.etl.common.transform.TransformationService
 import dev.a4i.bsc.etl.common.transform.VectorReaderService
 
-class DesertificationTransformationService(
+class WADAridityTransformationService(
     vectorReaderService: VectorReaderService,
     geoJSONWriterService: GeoJSONWriterService
 ) extends TransformationService:
 
   def transform(shapefileDirectory: Path): ZIO[Workspace, IOException, Path] =
     for
-      _                    <- ZIO.log("Transforming: Desertification")
-      workspace: Workspace <- ZIO.service[Workspace]
-      shapeFile: Path      <- findShapeFile(shapefileDirectory)
-      geoJSONFile: Path     = workspace.path / s"${shapeFile.baseName}.geojson"
-      _                    <- transform(shapeFile, geoJSONFile)
-      _                    <- ZIO.log("Transformed: Desertification")
+      _          <- ZIO.log("Transforming: Desertification")
+      workspace  <- ZIO.service[Workspace]
+      shapeFile  <- findShapeFile(shapefileDirectory)
+      geoJSONFile = workspace.path / s"${shapeFile.baseName}.geojson"
+      _          <- transform(shapeFile, geoJSONFile)
+      _          <- ZIO.log("Transformed: Desertification")
     yield geoJSONFile
 
   private def findShapeFile(directory: Path): IO[IOException, Path] =
@@ -41,9 +41,9 @@ class DesertificationTransformationService(
         .read(shapeFile)
         .flatMap(geoJSONWriterService.write(geoJSONFile))
 
-object DesertificationTransformationService:
+object WADAridityTransformationService:
 
   type Dependencies = VectorReaderService & GeoJSONWriterService
 
-  val layer: URLayer[Dependencies, DesertificationTransformationService] =
-    ZLayer.derive[DesertificationTransformationService]
+  val layer: URLayer[Dependencies, WADAridityTransformationService] =
+    ZLayer.derive[WADAridityTransformationService]
