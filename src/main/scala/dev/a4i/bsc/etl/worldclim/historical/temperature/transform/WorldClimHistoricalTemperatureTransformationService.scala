@@ -85,7 +85,7 @@ class WorldClimHistoricalTemperatureTransformationService(
           override def next: SimpleFeature =
             val featureDelegate: SimpleFeature = featuresIteratorDelegate.next
             featureBuilder.reset()
-            featureBuilder.addAll(featureDelegate)
+            featureBuilder.addAll(featureDelegate.getAttributes)
             featureBuilder.add(indicator)
             featureBuilder.add(resolution)
             featureBuilder.add(month)

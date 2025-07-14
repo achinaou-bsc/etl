@@ -24,11 +24,11 @@ class WADAridityETL(
   def etl: Task[Unit] =
     val workflow: RIO[Workspace, Unit] =
       for
-        _               <- ZIO.log("ETL / WAD / Aridity: Extracting...")
+        _                      <- ZIO.log("ETL / WAD / Aridity: Extracting...")
         aridityRasterDirectory <- extractionService.extract(WADDataSources.aridity)
-        _               <- ZIO.log("ETL / WAD / Aridity: Transforming...")
+        _                      <- ZIO.log("ETL / WAD / Aridity: Transforming...")
         aridityVectorDirectory <- aridityTransformationService.transform(aridityRasterDirectory)
-        _               <- ZIO.log("ETL / WAD / Aridity: Loading...")
+        _                      <- ZIO.log("ETL / WAD / Aridity: Loading...")
         _                      <- aridityLoadingService.load(aridityVectorDirectory)
       yield ()
 
