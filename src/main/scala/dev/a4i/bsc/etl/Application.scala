@@ -28,4 +28,5 @@ object Application extends ZIOAppDefault:
     for
       _ <- ZIO.serviceWithZIO[WADAridityETL](_.etl)
       _ <- ZIO.serviceWithZIO[WorldClimHistoricalTemperatureETL](_.etl)
+      _ <- ZIO.log("ETL: Done")
     yield ()
