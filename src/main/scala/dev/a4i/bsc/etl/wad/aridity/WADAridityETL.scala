@@ -1,4 +1,4 @@
-package dev.a4i.bsc.etl.wad
+package dev.a4i.bsc.etl.wad.aridity
 
 import zio.*
 

@@ -68,7 +68,7 @@ class WorldClimHistoricalTemperatureTransformationService(
     val indicator: String = metadata.indicator.toString
     val resolution: Int   = metadata.resolution
     val month: Int        = metadata.period match
-      case Monthly(month: Month) => month.ordinal
+      case Monthly(month: Month) => month.getValue
 
     new DecoratingSimpleFeatureCollection(featureCollection):
 

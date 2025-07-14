@@ -1,4 +1,4 @@
-package dev.a4i.bsc.etl.worldclim
+package dev.a4i.bsc.etl.worldclim.historical.temperature
 
 import java.io.IOException
 import java.time.Month

@@ -5,8 +5,8 @@ import zio.logging.backend.SLF4J
 
 import dev.a4i.bsc.etl.configuration.HttpClient
 import dev.a4i.bsc.etl.configuration.PostGISDataStore
-import dev.a4i.bsc.etl.wad.WADAridityETL
-import dev.a4i.bsc.etl.worldclim.WorldClimHistoricalTemperatureETL
+import dev.a4i.bsc.etl.wad.aridity.WADAridityETL
+import dev.a4i.bsc.etl.worldclim.historical.temperature.WorldClimHistoricalTemperatureETL
 
 object Application extends ZIOAppDefault:
 
