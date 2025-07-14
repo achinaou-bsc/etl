@@ -27,7 +27,7 @@ jobs:
       - name: Set up Scala and SBT
         uses: coursier/setup-action@v1
         with:
-          jvm: temurin:24
+          jvm: temurin:21
           apps: scala:3.7.1 sbt:1.10.7
 
       - name: Convert Project to SBT

@@ -1,12 +1,11 @@
 //> using scala 3.7.1
-//> using jvm temurin:24
+//> using jvm temurin:21
 
 //> using options -language:strictEquality
 //> using options -indent -new-syntax -Xkind-projector:underscores
 //> using options -deprecation -feature
 //> using options -explain -explain-types
 //> using options -Wsafe-init -Wvalue-discard -Wunused:all
-//> using options -preview
 
 //> using repository https://repo.osgeo.org/repository/release
 

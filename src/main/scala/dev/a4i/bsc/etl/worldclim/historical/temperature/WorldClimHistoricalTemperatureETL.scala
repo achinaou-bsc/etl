@@ -32,8 +32,9 @@ class WorldClimHistoricalTemperatureETL(
 
   def etl: Task[Unit] =
     val workflow: RIO[Workspace, Unit] =
+      val (url, metadata) = WorldClimHistoricalTemperatureDataSource.averagePerTenMinutes
+
       for
-        (url, metadata)  = WorldClimHistoricalTemperatureDataSource.averagePerTenMinutes
         rasterDirectory <- extractionService.extract(url)
         rasterFiles     <- findRasterFiles(rasterDirectory, metadata)
         vectorDirectory <- createVectorDirectory(rasterDirectory)

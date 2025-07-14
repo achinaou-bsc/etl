@@ -32,7 +32,7 @@ jobs:
       - name: Set up Scala
         uses: coursier/setup-action@v1
         with:
-          jvm: temurin:24
+          jvm: temurin:21
           apps: scala:3.7.1
 
       - name: Check Application's Code Formatting
