@@ -3,10 +3,12 @@ package dev.a4i.bsc.etl.worldclim.historical.temperature.transform
 import java.io.IOException
 import java.time.Month
 
+import org.geotools.api.feature.`type`.AttributeDescriptor
 import org.geotools.api.feature.simple.SimpleFeature
 import org.geotools.api.feature.simple.SimpleFeatureType
 import org.geotools.data.simple.SimpleFeatureCollection
 import org.geotools.data.simple.SimpleFeatureIterator
+import org.geotools.feature.AttributeTypeBuilder
 import org.geotools.feature.collection.DecoratingSimpleFeatureCollection
 import org.geotools.feature.simple.SimpleFeatureBuilder
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder
@@ -19,6 +21,7 @@ import dev.a4i.bsc.etl.common.transform.RasterReaderService
 import dev.a4i.bsc.etl.common.transform.RasterToVectorTransformationService
 import dev.a4i.bsc.etl.common.transform.TransformationService
 import dev.a4i.bsc.etl.worldclim.historical.temperature.common.WorldClimHistoricalTemperatureMetadata
+import dev.a4i.bsc.etl.worldclim.historical.temperature.common.WorldClimHistoricalTemperatureMetadata.Indicator
 import dev.a4i.bsc.etl.worldclim.historical.temperature.common.WorldClimHistoricalTemperatureMetadata.Period.*
 
 class WorldClimHistoricalTemperatureTransformationService(
@@ -44,14 +47,44 @@ class WorldClimHistoricalTemperatureTransformationService(
       metadata: WorldClimHistoricalTemperatureMetadata[Monthly],
       featureCollection: SimpleFeatureCollection
   ): SimpleFeatureCollection =
-    val schema: SimpleFeatureType =
+    val resolution: Int = metadata.resolution
+
+    val month: Int = metadata.period match
+      case Monthly(month: Month) => month.getValue
+
+    val valueAttributeName: String = metadata.indicator match
+      case Indicator.Average => "average_temperature"
+
+    val originalSchema: SimpleFeatureType =
+      featureCollection.getSchema
+
+    val renamedSchema: SimpleFeatureType =
+      val featureTypeBuilder: SimpleFeatureTypeBuilder = SimpleFeatureTypeBuilder()
+
+      featureTypeBuilder.setName(originalSchema.getName)
+      featureTypeBuilder.setCRS(originalSchema.getCoordinateReferenceSystem)
+
+      originalSchema.getAttributeDescriptors.forEach: originalAttributeDescriptor =>
+        originalAttributeDescriptor.getLocalName match
+          case "value" =>
+            val attributeTypeBuilder: AttributeTypeBuilder = new AttributeTypeBuilder:
+              init(originalAttributeDescriptor)
+
+            val renamedAttributeDescriptor: AttributeDescriptor =
+              attributeTypeBuilder.buildDescriptor(
+                valueAttributeName,
+                originalAttributeDescriptor.getType
+              )
+
+            featureTypeBuilder.add(renamedAttributeDescriptor)
+          case _       => featureTypeBuilder.add(originalAttributeDescriptor)
+
+      featureTypeBuilder.buildFeatureType
+
+    val finalSchema: SimpleFeatureType =
       val featureTypeBuilder: SimpleFeatureTypeBuilder =
         new SimpleFeatureTypeBuilder:
-          init(featureCollection.getSchema)
-
-      featureTypeBuilder
-        .nillable(false)
-        .add("indicator", classOf[String])
+          init(renamedSchema)
 
       featureTypeBuilder
         .nillable(false)
@@ -63,19 +96,14 @@ class WorldClimHistoricalTemperatureTransformationService(
 
       featureTypeBuilder.buildFeatureType
 
-    val indicator: String = metadata.indicator.toString
-    val resolution: Int   = metadata.resolution
-    val month: Int        = metadata.period match
-      case Monthly(month: Month) => month.getValue
-
     new DecoratingSimpleFeatureCollection(featureCollection):
 
       override val getSchema: SimpleFeatureType =
-        schema
+        finalSchema
 
       override def features: SimpleFeatureIterator =
         val featuresIteratorDelegate: SimpleFeatureIterator = delegate.features
-        val featureBuilder: SimpleFeatureBuilder            = SimpleFeatureBuilder(schema)
+        val featureBuilder: SimpleFeatureBuilder            = SimpleFeatureBuilder(finalSchema)
 
         new SimpleFeatureIterator:
 
@@ -85,10 +113,14 @@ class WorldClimHistoricalTemperatureTransformationService(
           override def next: SimpleFeature =
             val featureDelegate: SimpleFeature = featuresIteratorDelegate.next
             featureBuilder.reset()
-            featureBuilder.addAll(featureDelegate.getAttributes)
-            featureBuilder.add(indicator)
-            featureBuilder.add(resolution)
-            featureBuilder.add(month)
+
+            finalSchema.getAttributeDescriptors.forEach: attributeDescriptor =>
+              attributeDescriptor.getLocalName match
+                case `valueAttributeName` => featureBuilder.add(featureDelegate.getAttribute("value"))
+                case "resolution"         => featureBuilder.add(resolution)
+                case "month"              => featureBuilder.add(month)
+                case other                => featureBuilder.add(featureDelegate.getAttribute(other))
+
             featureBuilder.buildFeature(featureDelegate.getID)
 
           override def close: Unit =
