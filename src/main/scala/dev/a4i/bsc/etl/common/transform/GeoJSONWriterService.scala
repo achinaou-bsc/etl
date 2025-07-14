@@ -9,7 +9,7 @@ import zio.*
 
 class GeoJSONWriterService:
 
-  def write(geoJSONFile: Path)(featureCollection: SimpleFeatureCollection): ZIO[Scope, IOException, Path] =
+  def write(geoJSONFile: Path, featureCollection: SimpleFeatureCollection): ZIO[Scope, IOException, Path] =
     for
       outputStream <- ZIO.fromAutoCloseable:
                         ZIO.attemptBlockingIO:

@@ -35,9 +35,10 @@ class WADAridityTransformationService(
 
   private def transform(shapeFile: Path, geoJSONFile: Path): IO[IOException, Path] =
     ZIO.scoped:
-      vectorReaderService
-        .read(shapeFile)
-        .flatMap(geoJSONWriterService.write(geoJSONFile))
+      for
+        featureCollection <- vectorReaderService.read(shapeFile)
+        _                 <- geoJSONWriterService.write(geoJSONFile, featureCollection)
+      yield geoJSONFile
 
 object WADAridityTransformationService:
 

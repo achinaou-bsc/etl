@@ -37,7 +37,7 @@ class WorldClimHistoricalTemperatureTransformationService(
         coverage                     <- rasterReaderService.read(rasterFile)
         featureCollection            <- rasterToVectorTransformationService.transform(coverage)
         featureCollectionWithMetadata = migrate(metadata, featureCollection)
-        _                            <- geoJSONWriterService.write(geoJSONFile)(featureCollectionWithMetadata)
+        _                            <- geoJSONWriterService.write(geoJSONFile, featureCollectionWithMetadata)
       yield geoJSONFile
 
   private def migrate(
