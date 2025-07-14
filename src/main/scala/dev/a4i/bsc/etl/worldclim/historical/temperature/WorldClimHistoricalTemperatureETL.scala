@@ -32,16 +32,23 @@ class WorldClimHistoricalTemperatureETL(
 
   def etl: Task[Unit] =
     val workflow: RIO[Workspace, Unit] =
-      val (url, metadata) = WorldClimHistoricalTemperatureDataSource.averagePerTenMinutes
-
       for
+        (url, metadata)  = WorldClimHistoricalTemperatureDataSource.averagePerTenMinutes
+        _               <- ZIO.log("ETL / WorldClim / Historical / Temperature: Extracting...")
         rasterDirectory <- extractionService.extract(url)
         rasterFiles     <- findRasterFiles(rasterDirectory, metadata)
         vectorDirectory <- createVectorDirectory(rasterDirectory)
+        _               <- ZIO.log("ETL / WorldClim / Historical / Temperature: Transforming...")
         vectorFiles     <- ZIO.foreach(rasterFiles): (rasterFile, metadata) =>
+                             val Monthly(month)    = metadata.period
                              val geoJSONFile: Path = vectorDirectory / s"${rasterFile.baseName}.geojson"
-                             transformationService.transform(metadata, rasterFile, geoJSONFile)
-        _               <- ZIO.foreachDiscard(vectorFiles)(loadingService.load)
+
+                             ZIO.log(s"ETL / WorldClim / Historical / Temperature: Transforming ${month}...")
+                               *> transformationService.transform(metadata, rasterFile, geoJSONFile)
+        _               <- ZIO.log("ETL / WorldClim / Historical / Temperature: Loading...")
+        _               <- ZIO.foreachDiscard(vectorFiles): vectorFile =>
+                             ZIO.log(s"ETL / WorldClim / Historical / Temperature: Loading ${vectorFile}...")
+                               *> loadingService.load(vectorFile)
       yield ()
 
     workflow.provide(Workspace.layer)
@@ -56,6 +63,7 @@ class WorldClimHistoricalTemperatureETL(
       walk(directory)
         .filter(isFile)
         .filter(file => extensions.contains(file.ext.toLowerCase(Locale.ROOT)))
+        .sorted
         .map(file =>
           (
             file,
@@ -65,9 +73,9 @@ class WorldClimHistoricalTemperatureETL(
 
   private def createVectorDirectory(rasterDirectory: Path): ZIO[Workspace, IOException, Path] =
     for
-      workspace: Workspace <- ZIO.service[Workspace]
-      vectorDirectory: Path = workspace.path / s"${rasterDirectory.last}.vector"
-      _                    <- ZIO.attemptBlockingIO(makeDir.all(vectorDirectory))
+      workspace      <- ZIO.service[Workspace]
+      vectorDirectory = workspace.path / s"${rasterDirectory.last}.vector"
+      _              <- ZIO.attemptBlockingIO(makeDir.all(vectorDirectory))
     yield vectorDirectory
 
 object WorldClimHistoricalTemperatureETL:

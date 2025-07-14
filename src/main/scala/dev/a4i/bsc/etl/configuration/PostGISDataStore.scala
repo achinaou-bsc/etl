@@ -14,26 +14,26 @@ object PostGISDataStore:
   val layer: ULayer[PostGISDataStore] =
     ZLayer.scoped:
       for
-        configuration: Configuration <- ZIO.config[Configuration].orDie
-        parameters: Map[String, ?]    = Map(
-                                          "dbtype"              -> "postgis",
-                                          "host"                -> configuration.host,
-                                          "port"                -> configuration.port,
-                                          "schema"              -> "public",
-                                          "database"            -> configuration.name,
-                                          "user"                -> configuration.username,
-                                          "passwd"              -> configuration.password,
-                                          "preparedStatements"  -> true,
-                                          "encode functions"    -> true,
-                                          "Expose primary keys" -> true
-                                        )
-        dataStore: DataStore         <-
+        configuration <- ZIO.config[Configuration].orDie
+        parameters     = Map(
+                           "dbtype"              -> "postgis",
+                           "host"                -> configuration.host,
+                           "port"                -> configuration.port,
+                           "schema"              -> "public",
+                           "database"            -> configuration.name,
+                           "user"                -> configuration.username,
+                           "passwd"              -> configuration.password,
+                           "preparedStatements"  -> true,
+                           "encode functions"    -> true,
+                           "Expose primary keys" -> true
+                         )
+        dataStore     <-
           val acquire: UIO[DataStore] =
             ZIO
               .succeed(Option(DataStoreFinder.getDataStore(parameters.asJava)))
               .flatMap:
-                case Some(dataSource: DataStore) => ZIO.succeed(dataSource)
-                case None                        => ZIO.die(RuntimeException("Could not instantiate a DataStore for PostGIS"))
+                case Some(dataSource) => ZIO.succeed(dataSource)
+                case None             => ZIO.die(RuntimeException("Could not instantiate a DataStore for PostGIS"))
 
           val release: DataStore => UIO[Unit] = dataStore => ZIO.succeed(dataStore.dispose())
 

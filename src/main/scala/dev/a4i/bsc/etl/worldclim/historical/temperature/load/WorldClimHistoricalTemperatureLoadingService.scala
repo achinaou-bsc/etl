@@ -15,10 +15,8 @@ class WorldClimHistoricalTemperatureLoadingService(
   def load(vectorFile: Path): Task[Unit] =
     ZIO.scoped:
       for
-        _                 <- ZIO.log(s"Reading & Persisting: $vectorFile")
         featureCollection <- vectorReaderService.read(vectorFile)
         _                 <- postGISFeatureWriterService.write("worldclim_historical_temperature", featureCollection)
-        _                 <- ZIO.log(s"Read & Persisted: $vectorFile")
       yield ()
 
 object WorldClimHistoricalTemperatureLoadingService:

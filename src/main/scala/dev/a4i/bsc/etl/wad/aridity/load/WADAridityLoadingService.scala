@@ -15,10 +15,8 @@ class WADAridityLoadingService(
   def load(vectorFile: Path): Task[Unit] =
     ZIO.scoped:
       for
-        _                 <- ZIO.log(s"Reading & Persisting: $vectorFile")
         featureCollection <- vectorReaderService.read(vectorFile)
         _                 <- postGISFeatureWriterService.write("wad_aridity", featureCollection)
-        _                 <- ZIO.log(s"Read & Persisted: $vectorFile")
       yield ()
 
 object WADAridityLoadingService:

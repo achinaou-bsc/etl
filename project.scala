@@ -6,6 +6,7 @@
 //> using options -deprecation -feature
 //> using options -explain -explain-types
 //> using options -Wsafe-init -Wvalue-discard -Wunused:all
+//> using options -preview
 
 //> using repository https://repo.osgeo.org/repository/release
 

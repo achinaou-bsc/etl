@@ -17,17 +17,17 @@ object Workspace:
 
   private def create: IO[Config.Error | IOException, Workspace] =
     for
-      configuration: Configuration <- ZIO.config(Configuration.config)
-      id: UUID                      = UUID.randomUUID
-      path: Path                    = configuration.path / id.toString
-      _                            <- ZIO.attemptBlockingIO(makeDir.all(path))
+      configuration <- ZIO.config(Configuration.config)
+      id             = UUID.randomUUID
+      path           = configuration.path / id.toString
+      _             <- ZIO.attemptBlockingIO(makeDir.all(path))
     yield Workspace(id, path)
 
   private def delete(workspace: Workspace): UIO[Unit] =
     for
-      configuration: Configuration <- ZIO.config(Configuration.config).orDie
-      _                            <- ZIO.whenDiscard(configuration.autoClean):
-                                        ZIO.attemptBlockingIO(remove.all(workspace.path)).orDie
+      configuration <- ZIO.config(Configuration.config).orDie
+      _             <- ZIO.whenDiscard(configuration.autoClean):
+                         ZIO.attemptBlockingIO(remove.all(workspace.path)).orDie
     yield ()
 
   case class Configuration(path: Path, autoClean: Boolean)

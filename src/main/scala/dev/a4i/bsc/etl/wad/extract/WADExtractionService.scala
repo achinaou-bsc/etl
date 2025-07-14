@@ -16,11 +16,9 @@ class WADExtractionService(
 
   def extract(url: URL): RIO[Workspace, Path] =
     for
-      _         <- ZIO.log(s"Extracting WAD Dataset: $url")
       workspace <- ZIO.service[Workspace]
       archive   <- downloadService.download(url, workspace.path)
       directory <- unarchivingService.unarchive(archive, workspace.path)
-      _         <- ZIO.log(s"Extracted WAD Dataset: $url")
     yield directory
 
 object WADExtractionService:

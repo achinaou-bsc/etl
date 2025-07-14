@@ -34,12 +34,10 @@ class WorldClimHistoricalTemperatureTransformationService(
   ): IO[IOException | ProcessException, Path] =
     ZIO.scoped:
       for
-        _                            <- ZIO.log(s"Vectorizing: $rasterFile -> $geoJSONFile")
         coverage                     <- rasterReaderService.read(rasterFile)
         featureCollection            <- rasterToVectorTransformationService.transform(coverage)
         featureCollectionWithMetadata = migrate(metadata, featureCollection)
         _                            <- geoJSONWriterService.write(geoJSONFile)(featureCollectionWithMetadata)
-        _                            <- ZIO.log(s"Vectorized: $rasterFile -> $geoJSONFile")
       yield geoJSONFile
 
   private def migrate(

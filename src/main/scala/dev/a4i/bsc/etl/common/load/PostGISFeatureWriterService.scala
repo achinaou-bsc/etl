@@ -16,23 +16,23 @@ class PostGISFeatureWriterService(dataStore: PostGISDataStore):
 
   def write(tableName: String, featureCollection: SimpleFeatureCollection): ZIO[Scope, IOException, Unit] =
     for
-      _                                   <- ZIO.unit
-      sourceFeatureType: SimpleFeatureType = featureCollection.getSchema
-      targetFeatureType: SimpleFeatureType = getTargetFeatureType(tableName, sourceFeatureType)
-      _                                   <- createSchema(tableName, targetFeatureType)
-      featureStore: SimpleFeatureStore    <- ZIO.attemptBlockingIO:
-                                               dataStore
-                                                 .getFeatureSource(tableName)
-                                                 .asInstanceOf[SimpleFeatureStore]
-      _                                   <- usingTransaction: transaction =>
-                                               ZIO.attemptBlockingIO:
-                                                 featureStore.setTransaction(transaction)
-                                                 featureStore.addFeatures(featureCollection)
+      sourceFeatureType = featureCollection.getSchema
+      targetFeatureType = getTargetFeatureType(tableName, sourceFeatureType)
+      _                <- createSchema(tableName, targetFeatureType)
+      featureStore     <- ZIO.attemptBlockingIO:
+                            dataStore
+                              .getFeatureSource(tableName)
+                              .asInstanceOf[SimpleFeatureStore]
+      _                <- usingTransaction: transaction =>
+                            ZIO.attemptBlockingIO:
+                              featureStore.setTransaction(transaction)
+                              featureStore.addFeatures(featureCollection)
     yield ()
 
   private def getTargetFeatureType(tableName: String, sourceFeatureType: SimpleFeatureType): SimpleFeatureType =
-    val featureTypeBuilder = SimpleFeatureTypeBuilder()
-    featureTypeBuilder.init(sourceFeatureType)
+    val featureTypeBuilder = new SimpleFeatureTypeBuilder:
+      init(sourceFeatureType)
+
     featureTypeBuilder.setName(tableName)
     featureTypeBuilder.buildFeatureType
 

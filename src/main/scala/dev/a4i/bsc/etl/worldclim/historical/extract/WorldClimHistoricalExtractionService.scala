@@ -16,11 +16,9 @@ class WorldClimHistoricalExtractionService(
 
   def extract(url: URL): RIO[Workspace, Path] =
     for
-      _                    <- ZIO.log("Extracting: Temperature")
       workspace: Workspace <- ZIO.service[Workspace]
       archive: Path        <- downloadService.download(url, workspace.path)
       directory: Path      <- unarchivingService.unarchive(archive, workspace.path)
-      _                    <- ZIO.log("Extracted: Temperature")
     yield directory
 
 object WorldClimHistoricalExtractionService:

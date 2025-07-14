@@ -18,12 +18,10 @@ class WADAridityTransformationService(
 
   def transform(shapefileDirectory: Path): ZIO[Workspace, IOException, Path] =
     for
-      _          <- ZIO.log("Transforming: Aridity")
       workspace  <- ZIO.service[Workspace]
       shapeFile  <- findShapeFile(shapefileDirectory)
       geoJSONFile = workspace.path / s"${shapeFile.baseName}.geojson"
       _          <- transform(shapeFile, geoJSONFile)
-      _          <- ZIO.log("Transformed: Aridity")
     yield geoJSONFile
 
   private def findShapeFile(directory: Path): IO[IOException, Path] =
