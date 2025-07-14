@@ -26,6 +26,6 @@ object Application extends ZIOAppDefault:
 
   private lazy val program: ZIO[WADAridityETL & WorldClimHistoricalTemperatureETL, Throwable, Unit] =
     for
-      _ <- ZIO.serviceWith[WADAridityETL](_.etl)
-      _ <- ZIO.serviceWith[WorldClimHistoricalTemperatureETL](_.etl)
+      _ <- ZIO.serviceWithZIO[WADAridityETL](_.etl)
+      _ <- ZIO.serviceWithZIO[WorldClimHistoricalTemperatureETL](_.etl)
     yield ()
