@@ -46,9 +46,9 @@ class WorldClimHistoricalTemperatureETL(
                              ZIO.log(s"ETL / WorldClim / Historical / Temperature: Transforming ${month}...")
                                *> transformationService.transform(metadata, rasterFile, geoJSONFile)
         _               <- ZIO.log("ETL / WorldClim / Historical / Temperature: Loading...")
-        _               <- ZIO.foreachDiscard(vectorFiles): vectorFile =>
+        _               <- ZIO.foreachDiscard(vectorFiles): (vectorFile, metadata) =>
                              ZIO.log(s"ETL / WorldClim / Historical / Temperature: Loading ${vectorFile}...")
-                               *> loadingService.load(vectorFile)
+                               *> loadingService.load(metadata, vectorFile)
       yield ()
 
     workflow.provide(Workspace.layer)
