@@ -75,7 +75,7 @@ class WorldClimHistoricalTemperatureTransformationService(
 
         featureTypeBuilder.buildFeatureType
 
-      override val features: SimpleFeatureIterator =
+      override def features: SimpleFeatureIterator =
         val swappedAttributeNameMapping: Map[String, String] = attributeNameMapping.map(_.swap)
 
         val decoratedFeatureType: SimpleFeatureType         = getSchema
