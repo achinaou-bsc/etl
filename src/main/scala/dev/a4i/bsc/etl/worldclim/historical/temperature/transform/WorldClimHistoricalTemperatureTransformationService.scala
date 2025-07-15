@@ -3,12 +3,10 @@ package dev.a4i.bsc.etl.worldclim.historical.temperature.transform
 import java.io.IOException
 import java.time.Month
 
-import org.geotools.api.feature.`type`.AttributeDescriptor
 import org.geotools.api.feature.simple.SimpleFeature
 import org.geotools.api.feature.simple.SimpleFeatureType
 import org.geotools.data.simple.SimpleFeatureCollection
 import org.geotools.data.simple.SimpleFeatureIterator
-import org.geotools.feature.AttributeTypeBuilder
 import org.geotools.feature.collection.DecoratingSimpleFeatureCollection
 import org.geotools.feature.simple.SimpleFeatureBuilder
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder
@@ -20,6 +18,7 @@ import dev.a4i.bsc.etl.common.transform.GeoJSONWriterService
 import dev.a4i.bsc.etl.common.transform.RasterReaderService
 import dev.a4i.bsc.etl.common.transform.RasterToVectorTransformationService
 import dev.a4i.bsc.etl.common.transform.TransformationService
+import dev.a4i.bsc.etl.common.util.FeatureTypeExtensions.*
 import dev.a4i.bsc.etl.worldclim.historical.temperature.common.WorldClimHistoricalTemperatureMetadata
 import dev.a4i.bsc.etl.worldclim.historical.temperature.common.WorldClimHistoricalTemperatureMetadata.Indicator
 import dev.a4i.bsc.etl.worldclim.historical.temperature.common.WorldClimHistoricalTemperatureMetadata.Period.*
@@ -47,63 +46,41 @@ class WorldClimHistoricalTemperatureTransformationService(
       metadata: WorldClimHistoricalTemperatureMetadata[Monthly],
       featureCollection: SimpleFeatureCollection
   ): SimpleFeatureCollection =
-    val resolution: Int = metadata.resolution
-
-    val month: Int = metadata.period match
-      case Monthly(month: Month) => month.getValue
-
-    val valueAttributeName: String = metadata.indicator match
-      case Indicator.Average => "average_temperature"
-
-    val originalSchema: SimpleFeatureType =
-      featureCollection.getSchema
-
-    val renamedSchema: SimpleFeatureType =
-      val featureTypeBuilder: SimpleFeatureTypeBuilder = SimpleFeatureTypeBuilder()
-
-      featureTypeBuilder.setName(originalSchema.getName)
-      featureTypeBuilder.setCRS(originalSchema.getCoordinateReferenceSystem)
-
-      originalSchema.getAttributeDescriptors.forEach: originalAttributeDescriptor =>
-        originalAttributeDescriptor.getLocalName match
-          case "value" =>
-            val attributeTypeBuilder: AttributeTypeBuilder = new AttributeTypeBuilder:
-              init(originalAttributeDescriptor)
-
-            val renamedAttributeDescriptor: AttributeDescriptor =
-              attributeTypeBuilder.buildDescriptor(
-                valueAttributeName,
-                originalAttributeDescriptor.getType
-              )
-
-            featureTypeBuilder.add(renamedAttributeDescriptor)
-          case _       => featureTypeBuilder.add(originalAttributeDescriptor)
-
-      featureTypeBuilder.buildFeatureType
-
-    val finalSchema: SimpleFeatureType =
-      val featureTypeBuilder: SimpleFeatureTypeBuilder =
-        new SimpleFeatureTypeBuilder:
-          init(renamedSchema)
-
-      featureTypeBuilder
-        .nillable(false)
-        .add("resolution", classOf[Int])
-
-      featureTypeBuilder
-        .nillable(false)
-        .add("month", classOf[Int])
-
-      featureTypeBuilder.buildFeatureType
-
     new DecoratingSimpleFeatureCollection(featureCollection):
 
-      override val getSchema: SimpleFeatureType =
-        finalSchema
+      private val attributeNameMapping: Map[String, String] = Map(
+        "value" -> metadata.indicator.match
+          case Indicator.Average => "average_temperature"
+      )
 
-      override def features: SimpleFeatureIterator =
+      private val resolutionAttributeName: String = "resolution"
+      private val resolutionAttributeValue: Int   = metadata.resolution
+
+      private val monthAttributeName: String = "month"
+      private val monthAttributeValue: Int   = metadata.period match
+        case Monthly(month: Month) => month.getValue
+
+      override val getSchema: SimpleFeatureType =
+        val featureTypeBuilder: SimpleFeatureTypeBuilder = SimpleFeatureTypeBuilder()
+
+        featureTypeBuilder.init(delegate.getSchema.renameAttributes(attributeNameMapping))
+
+        featureTypeBuilder
+          .nillable(false)
+          .add(resolutionAttributeName, resolutionAttributeValue.getClass)
+
+        featureTypeBuilder
+          .nillable(false)
+          .add(monthAttributeName, monthAttributeValue.getClass)
+
+        featureTypeBuilder.buildFeatureType
+
+      override val features: SimpleFeatureIterator =
+        val swappedAttributeNameMapping: Map[String, String] = attributeNameMapping.map(_.swap)
+
+        val decoratedFeatureType: SimpleFeatureType         = getSchema
         val featuresIteratorDelegate: SimpleFeatureIterator = delegate.features
-        val featureBuilder: SimpleFeatureBuilder            = SimpleFeatureBuilder(finalSchema)
+        val featureBuilder: SimpleFeatureBuilder            = SimpleFeatureBuilder(decoratedFeatureType)
 
         new SimpleFeatureIterator:
 
@@ -114,12 +91,15 @@ class WorldClimHistoricalTemperatureTransformationService(
             val featureDelegate: SimpleFeature = featuresIteratorDelegate.next
             featureBuilder.reset()
 
-            finalSchema.getAttributeDescriptors.forEach: attributeDescriptor =>
-              attributeDescriptor.getLocalName match
-                case `valueAttributeName` => featureBuilder.add(featureDelegate.getAttribute("value"))
-                case "resolution"         => featureBuilder.add(resolution)
-                case "month"              => featureBuilder.add(month)
-                case other                => featureBuilder.add(featureDelegate.getAttribute(other))
+            decoratedFeatureType.getAttributeDescriptors.forEach: attributeDescriptor =>
+              swappedAttributeNameMapping.get(attributeDescriptor.getLocalName) match
+                case Some(originalAttributeName) =>
+                  featureBuilder.add(featureDelegate.getAttribute(originalAttributeName))
+                case None                        =>
+                  attributeDescriptor.getLocalName match
+                    case `resolutionAttributeName` => featureBuilder.add(resolutionAttributeValue)
+                    case `monthAttributeName`      => featureBuilder.add(monthAttributeValue)
+                    case other                     => featureBuilder.add(featureDelegate.getAttribute(other))
 
             featureBuilder.buildFeature(featureDelegate.getID)
 
