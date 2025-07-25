@@ -10,9 +10,9 @@
 
 //> using repository https://repo.osgeo.org/repository/release
 
-//> using dep dev.zio::zio:2.1.19
+//> using dep dev.zio::zio:2.1.20
 //> using dep dev.zio::zio-config-magnolia:4.0.4
-//> using dep dev.zio::zio-streams:2.1.19
+//> using dep dev.zio::zio-streams:2.1.20
 //> using dep dev.zio::zio-http:3.3.3
 
 //> using dep com.lihaoyi::os-lib:0.11.4
