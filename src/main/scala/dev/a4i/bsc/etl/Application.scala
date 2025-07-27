@@ -13,7 +13,7 @@ object Application extends ZIOAppDefault:
   override val bootstrap: ZLayer[Any, Any, Any] =
     Runtime.removeDefaultLoggers ++ SLF4J.slf4j
 
-  override val run: UIO[ExitCode] =
+  override val run: ZIO[Any, Throwable, Unit] =
     program
       .provide(
         HttpClient.layer,
@@ -21,8 +21,7 @@ object Application extends ZIOAppDefault:
         WADAridityETL.layer,
         WorldClimHistoricalTemperatureETL.layer
       )
-      .logError
-      .exitCode
+      .unit
 
   private lazy val program: ZIO[WADAridityETL & WorldClimHistoricalTemperatureETL, Throwable, Unit] =
     for
