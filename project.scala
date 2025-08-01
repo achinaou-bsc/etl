@@ -15,7 +15,7 @@
 //> using dep dev.zio::zio-streams:2.1.20
 //> using dep dev.zio::zio-http:3.3.3
 
-//> using dep com.lihaoyi::os-lib:0.11.4
+//> using dep com.lihaoyi::os-lib:0.11.5
 
 //> using dep org.geotools:gt-geotiff:33.2
 //> using dep org.geotools:gt-shapefile:33.2
