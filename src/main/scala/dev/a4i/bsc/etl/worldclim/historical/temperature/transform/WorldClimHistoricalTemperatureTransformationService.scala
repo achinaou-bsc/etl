@@ -2,15 +2,19 @@ package dev.a4i.bsc.etl.worldclim.historical.temperature.transform
 
 import java.io.IOException
 import java.time.Month
+import scala.jdk.CollectionConverters.*
 
 import org.geotools.api.feature.simple.SimpleFeature
 import org.geotools.api.feature.simple.SimpleFeatureType
+import org.geotools.coverage.grid.GridCoverage2D
+import org.geotools.coverage.grid.GridCoverageFactory
 import org.geotools.data.simple.SimpleFeatureCollection
 import org.geotools.data.simple.SimpleFeatureIterator
 import org.geotools.feature.collection.DecoratingSimpleFeatureCollection
 import org.geotools.feature.simple.SimpleFeatureBuilder
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder
 import org.geotools.process.ProcessException
+import org.geotools.referencing.CRS
 import os.*
 import zio.*
 
@@ -35,10 +39,23 @@ class WorldClimHistoricalTemperatureTransformationService(
     ZIO.scoped:
       for
         coverage                     <- rasterReaderService.read(rasterFile)
-        featureCollection            <- rasterToVectorTransformationService.transform(coverage)
+        patchedCoverage              <- patch(coverage)
+        featureCollection            <- rasterToVectorTransformationService.transform(patchedCoverage)
         featureCollectionWithMetadata = migrate(metadata, featureCollection)
         _                            <- geoJSONWriterService.write(geoJSONFile, featureCollectionWithMetadata)
       yield (geoJSONFile, metadata)
+
+  private def patch(coverage: GridCoverage2D): IO[IOException, GridCoverage2D] =
+    ZIO.attemptBlockingIO:
+      GridCoverageFactory().create(
+        s"${coverage.getName().toString}-patched",
+        coverage.getRenderedImage,
+        CRS.decode("EPSG:4326", /* longitudeFirst */ true),
+        coverage.getGridGeometry.getGridToCRS,
+        coverage.getSampleDimensions,
+        Array.empty,
+        Map.empty.asJava
+      )
 
   private def migrate(
       metadata: WorldClimHistoricalTemperatureMetadata[Monthly],

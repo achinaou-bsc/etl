@@ -16,17 +16,16 @@ class PostGISFeatureWriterService(dataStore: PostGISDataStore):
 
   def write(tableName: String, featureCollection: SimpleFeatureCollection): ZIO[Scope, IOException, Unit] =
     for
-      sourceFeatureType = featureCollection.getSchema
-      targetFeatureType = getTargetFeatureType(tableName, sourceFeatureType)
-      _                <- createSchema(tableName, targetFeatureType)
-      featureStore     <- ZIO.attemptBlockingIO:
-                            dataStore
-                              .getFeatureSource(tableName)
-                              .asInstanceOf[SimpleFeatureStore]
-      _                <- usingTransaction: transaction =>
-                            ZIO.attemptBlockingIO:
-                              featureStore.setTransaction(transaction)
-                              featureStore.addFeatures(featureCollection)
+      featureType   = getTargetFeatureType(tableName, featureCollection.getSchema)
+      _            <- createSchema(featureType)
+      featureStore <- ZIO.attemptBlockingIO:
+                        dataStore
+                          .getFeatureSource(tableName)
+                          .asInstanceOf[SimpleFeatureStore]
+      _            <- usingTransaction: transaction =>
+                        ZIO.attemptBlockingIO:
+                          featureStore.setTransaction(transaction)
+                          featureStore.addFeatures(featureCollection)
     yield ()
 
   private def getTargetFeatureType(tableName: String, sourceFeatureType: SimpleFeatureType): SimpleFeatureType =
@@ -36,9 +35,9 @@ class PostGISFeatureWriterService(dataStore: PostGISDataStore):
     featureTypeBuilder.setName(tableName)
     featureTypeBuilder.buildFeatureType
 
-  private def createSchema(tableName: String, featureType: SimpleFeatureType): IO[IOException, Unit] =
+  private def createSchema(featureType: SimpleFeatureType): IO[IOException, Unit] =
     ZIO.attemptBlockingIO:
-      if !dataStore.getTypeNames.contains(tableName)
+      if !dataStore.getTypeNames.contains(featureType.getTypeName)
       then dataStore.createSchema(featureType)
 
   private def usingTransaction[R, E, A](use: DefaultTransaction => ZIO[R, E, A]): ZIO[R, E, A] =
