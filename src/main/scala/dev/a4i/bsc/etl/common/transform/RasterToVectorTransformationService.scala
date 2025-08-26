@@ -10,15 +10,16 @@ import zio.*
 
 class RasterToVectorTransformationService:
 
-  def transform(coverage: GridCoverage2D): UIO[SimpleFeatureCollection] =
+  def transform(
+      coverage: GridCoverage2D,
+      classificationRanges: Seq[Range[Integer]] = Seq.empty
+  ): UIO[SimpleFeatureCollection] =
     val noDataValues: List[Number] =
       coverage
         .getSampleDimension(0)
         .getNoDataValues
         .map(_.asInstanceOf[Number])
         .toList
-
-    val classificationRanges: List[Range[Integer]] = List()
 
     ZIO
       .attemptBlocking:

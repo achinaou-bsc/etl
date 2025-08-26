@@ -13,6 +13,7 @@ import org.geotools.feature.collection.DecoratingSimpleFeatureCollection
 import org.geotools.feature.simple.SimpleFeatureBuilder
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder
 import org.geotools.referencing.CRS
+import org.jaitools.numeric.Range
 import os.*
 import zio.*
 
@@ -34,13 +35,23 @@ class GlobalAiHistoricalTransformationService(
       rasterFile: Path,
       geoJSONFile: Path
   ): UIO[(Path, GlobalAiHistoricalMetadata[Monthly])] =
+    val classificationRanges: Seq[Range[Integer]] = Seq(
+      Range.create(0, true, 300, false),      // Hyper-arid (AI: 0.0001 to 0.03)
+      Range.create(300, true, 2000, false),   // Arid (AI: 0.03 to 0.20)
+      Range.create(2000, true, 5000, false),  // Semi-arid (AI: 0.20 to 0.50)
+      Range.create(5000, true, 6500, false),  // Dry sub-humid (AI: 0.50 to 0.65)
+      Range.create(6500, true, 10000, false), // Humid moisture-limited (AI: 0.65 to 1.00)
+      Range.create(10000, true, 65535, true)  // Humid energy-limited (AI: >1.00, includes clipped values)
+    )
+
     ZIO.scoped:
       for
-        _                            <- ZIO.log("Reading Raster...")
-        coverage                     <- rasterReaderService.read(rasterFile)
+        _                 <- ZIO.log("Reading Raster...")
+        coverage          <- rasterReaderService.read(rasterFile)
         // patchedCoverage              <- patch(coverage) // FIXME: Uncomment
-        _                            <- ZIO.log("Converting to Vector...")
-        featureCollection            <- rasterToVectorTransformationService.transform(coverage) // FIXME: Use patchedCoverage
+        _                 <- ZIO.log("Converting to Vector...")
+        featureCollection <-
+          rasterToVectorTransformationService.transform(coverage, classificationRanges) // FIXME: Use patchedCoverage
         _                            <- ZIO.log("Decorating...")
         featureCollectionWithMetadata = migrate(metadata, featureCollection)
         _                            <- ZIO.log("Writing...")
