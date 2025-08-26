@@ -32,7 +32,7 @@ class WorldClimHistoricalTemperatureETL(
   def etl: UIO[Unit] =
     val workflow: URIO[Workspace, Unit] =
       for
-        (url, metadata)  = WorldClimHistoricalTemperatureDataSource.averagePerThirtySeconds
+        (url, metadata)  = WorldClimHistoricalTemperatureDataSource.averagePerFiveMinutes
         _               <- ZIO.log("ETL / WorldClim / Historical / Temperature: Extracting...")
         rasterDirectory <- extractionService.extract(url)
         rasterFiles     <- findRasterFiles(rasterDirectory, metadata)

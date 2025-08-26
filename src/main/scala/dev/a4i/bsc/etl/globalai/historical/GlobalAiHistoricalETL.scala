@@ -22,6 +22,7 @@ import dev.a4i.bsc.etl.globalai.historical.extract.GlobalAiHistoricalDataSource
 import dev.a4i.bsc.etl.globalai.historical.extract.GlobalAiHistoricalExtractionService
 import dev.a4i.bsc.etl.globalai.historical.load.GlobalAiHistoricalLoadingService
 import dev.a4i.bsc.etl.globalai.historical.transform.GlobalAiHistoricalTransformationService
+import dev.a4i.bsc.etl.common.transform.ResolutionReducerService
 
 class GlobalAiHistoricalETL(
     extractionService: GlobalAiHistoricalExtractionService,
@@ -91,6 +92,7 @@ object GlobalAiHistoricalETL:
       PostGISFeatureWriterService.layer,
       RasterReaderService.layer,
       RasterToVectorTransformationService.layer,
+      ResolutionReducerService.layer,
       UnarchivingService.layer,
       VectorReaderService.layer,
       GlobalAiHistoricalExtractionService.layer,
