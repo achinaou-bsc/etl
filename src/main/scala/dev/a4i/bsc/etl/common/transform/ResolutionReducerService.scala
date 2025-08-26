@@ -10,7 +10,7 @@ import zio.*
 
 class ResolutionReducerService:
 
-  def downsampleByAveraging(coverage: GridCoverage2D, scaleFactor: Double): UIO[GridCoverage2D] =
+  def downsampleByAveraging(coverage: GridCoverage2D, scaleFactor: Int): UIO[GridCoverage2D] =
     ZIO
       .attemptBlocking:
         val image: RenderedImage = coverage.getRenderedImage
