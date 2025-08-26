@@ -29,7 +29,7 @@ class WorldClimHistoricalTemperatureETL(
     loadingService: WorldClimHistoricalTemperatureLoadingService
 ):
 
-  def etl: UIO[Unit]                                                                         =
+  def etl: UIO[Unit] =
     val workflow: URIO[Workspace, Unit] =
       for
         (url, metadata)  = WorldClimHistoricalTemperatureDataSource.averagePerThirtySeconds

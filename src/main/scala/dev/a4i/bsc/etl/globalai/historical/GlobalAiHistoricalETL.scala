@@ -33,20 +33,20 @@ class GlobalAiHistoricalETL(
     val workflow: URIO[Workspace, Unit] =
       for
         (url, metadata)  = GlobalAiHistoricalDataSource.dataSource
-        _               <- ZIO.log("ETL / GlobalAi / Historical: Extracting...")
+        _               <- ZIO.log("ETL / Global Aridity Index / Historical: Extracting...")
         rasterDirectory <- extractionService.extract(url)
         rasterFiles     <- findRasterFiles(rasterDirectory, metadata)
         vectorDirectory <- createVectorDirectory(rasterDirectory)
-        _               <- ZIO.log("ETL / GlobalAi / Historical: Transforming...")
+        _               <- ZIO.log("ETL / Global Aridity Index / Historical: Transforming...")
         vectorFiles     <- ZIO.foreach(rasterFiles): (rasterFile, metadata) =>
                              val Monthly(month)    = metadata.period
                              val geoJSONFile: Path = vectorDirectory / s"${rasterFile.baseName}.geojson"
 
-                             ZIO.log(s"ETL / GlobalAi / Historical: Transforming ${month}...")
+                             ZIO.log(s"ETL / Global Aridity Index / Historical: Transforming ${month}...")
                                *> transformationService.transform(metadata, rasterFile, geoJSONFile)
-        _               <- ZIO.log("ETL / GlobalAi / Historical: Loading...")
+        _               <- ZIO.log("ETL / Global Aridity Index / Historical: Loading...")
         _               <- ZIO.foreachDiscard(vectorFiles): (vectorFile, metadata) =>
-                             ZIO.log(s"ETL / GlobalAi / Historical: Loading ${vectorFile}...")
+                             ZIO.log(s"ETL / Global Aridity Index / Historical: Loading ${vectorFile}...")
                                *> loadingService.load(metadata, vectorFile)
       yield ()
 

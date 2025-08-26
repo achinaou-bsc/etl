@@ -15,8 +15,8 @@ object GlobalAiHistoricalDataSource:
 
   val dataSource: GlobalAiHistoricalDataSource =
     (
+      // FIXME: Replace URL with "https://figshare.com/ndownloader/articles/7504448/versions/7"
       url = URL.decode("http://localhost:9000/7504448.zip").getOrElse(???),
-      // url = URL.decode("https://figshare.com/ndownloader/articles/7504448/versions/7").getOrElse(???),
       metadata = GlobalAiHistoricalMetadata(
         Indicator.Average,
         30,
