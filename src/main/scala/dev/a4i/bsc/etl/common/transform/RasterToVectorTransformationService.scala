@@ -12,23 +12,27 @@ class RasterToVectorTransformationService:
 
   def transform(
       coverage: GridCoverage2D,
+      noDataValues: Seq[Number] = Seq.empty,
       classificationRanges: Seq[Range[Integer]] = Seq.empty
   ): UIO[SimpleFeatureCollection] =
-    val noDataValues: List[Number] =
-      coverage
-        .getSampleDimension(0)
-        .getNoDataValues
-        .map(_.asInstanceOf[Number])
-        .toList
-
     ZIO
       .attemptBlocking:
+        val effectiveNoDataValues: Seq[Number] =
+          if noDataValues.nonEmpty
+          then noDataValues
+          else
+            coverage
+              .getSampleDimension(0)
+              .getNoDataValues
+              .map(_.asInstanceOf[Number])
+              .toIndexedSeq
+
         PolygonExtractionProcess().execute(
           coverage,
           0,
           true,
           null,
-          noDataValues.asJava,
+          effectiveNoDataValues.asJava,
           classificationRanges.asJava,
           null
         )
