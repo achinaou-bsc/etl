@@ -36,10 +36,14 @@ class GlobalAiHistoricalTransformationService(
   ): UIO[(Path, GlobalAiHistoricalMetadata[Monthly])] =
     ZIO.scoped:
       for
+        _                            <- ZIO.log("Reading Raster...")
         coverage                     <- rasterReaderService.read(rasterFile)
         // patchedCoverage              <- patch(coverage) // FIXME: Uncomment
+        _                            <- ZIO.log("Converting to Vector...")
         featureCollection            <- rasterToVectorTransformationService.transform(coverage) // FIXME: Use patchedCoverage
+        _                            <- ZIO.log("Decorating...")
         featureCollectionWithMetadata = migrate(metadata, featureCollection)
+        _                            <- ZIO.log("Writing...")
         _                            <- geoJSONWriterService.write(geoJSONFile, featureCollectionWithMetadata)
       yield (geoJSONFile, metadata)
 
