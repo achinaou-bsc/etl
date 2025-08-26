@@ -1,6 +1,5 @@
 package dev.a4i.bsc.etl.worldclim.historical.temperature
 
-import java.io.IOException
 import java.time.Month
 import java.util.Locale
 
@@ -30,8 +29,8 @@ class WorldClimHistoricalTemperatureETL(
     loadingService: WorldClimHistoricalTemperatureLoadingService
 ):
 
-  def etl: Task[Unit] =
-    val workflow: RIO[Workspace, Unit] =
+  def etl: UIO[Unit]                                                                         =
+    val workflow: URIO[Workspace, Unit] =
       for
         (url, metadata)  = WorldClimHistoricalTemperatureDataSource.averagePerThirtySeconds
         _               <- ZIO.log("ETL / WorldClim / Historical / Temperature: Extracting...")
@@ -56,26 +55,28 @@ class WorldClimHistoricalTemperatureETL(
   private def findRasterFiles(
       directory: Path,
       metadata: WorldClimHistoricalTemperatureMetadata[Annual]
-  ): IO[IOException, Seq[(Path, WorldClimHistoricalTemperatureMetadata[Monthly])]] =
+  ): UIO[Seq[(Path, WorldClimHistoricalTemperatureMetadata[Monthly])]] =
     val extensions: Set[String] = Set("tif", "tiff")
 
-    ZIO.attemptBlockingIO:
-      walk(directory)
-        .filter(isFile)
-        .filter(file => extensions.contains(file.ext.toLowerCase(Locale.ROOT)))
-        .sorted
-        .map(file =>
-          (
-            file,
-            metadata.copy(period = Monthly(Month.of(file.baseName.split("_").last.toInt)))
+    ZIO
+      .attemptBlocking:
+        walk(directory)
+          .filter(isFile)
+          .filter(file => extensions.contains(file.ext.toLowerCase(Locale.ROOT)))
+          .sorted
+          .map(file =>
+            (
+              file,
+              metadata.copy(period = Monthly(Month.of(file.baseName.split("_").last.toInt)))
+            )
           )
-        )
+      .orDie
 
-  private def createVectorDirectory(rasterDirectory: Path): ZIO[Workspace, IOException, Path] =
+  private def createVectorDirectory(rasterDirectory: Path): URIO[Workspace, Path] =
     for
       workspace      <- ZIO.service[Workspace]
       vectorDirectory = workspace.path / s"${rasterDirectory.last}.vector"
-      _              <- ZIO.attemptBlockingIO(makeDir.all(vectorDirectory))
+      _              <- ZIO.attemptBlocking(makeDir.all(vectorDirectory)).orDie
     yield vectorDirectory
 
 object WorldClimHistoricalTemperatureETL:

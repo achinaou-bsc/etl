@@ -14,7 +14,7 @@ class GlobalAiHistoricalExtractionService(
     unarchivingService: UnarchivingService
 ) extends ExtractionService:
 
-  def extract(url: URL): RIO[Workspace, Path] =
+  def extract(url: URL): URIO[Workspace, Path] =
     for
       workspace: Workspace <- ZIO.service[Workspace]
       archive: Path        <- downloadService.download(url, workspace.path)

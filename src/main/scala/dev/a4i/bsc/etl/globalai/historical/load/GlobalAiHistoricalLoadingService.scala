@@ -15,7 +15,7 @@ class GlobalAiHistoricalLoadingService(
     postGISFeatureWriterService: PostGISFeatureWriterService
 ) extends LoadingService:
 
-  def load(metadata: GlobalAiHistoricalMetadata[Monthly], vectorFile: Path): Task[Unit] =
+  def load(metadata: GlobalAiHistoricalMetadata[Monthly], vectorFile: Path): UIO[Unit] =
     ZIO.scoped:
       for
         qualifier          = metadata.indicator match

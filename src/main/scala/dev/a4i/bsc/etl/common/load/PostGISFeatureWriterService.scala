@@ -1,6 +1,5 @@
 package dev.a4i.bsc.etl.common.load
 
-import java.io.IOException
 import java.util.UUID
 
 import org.geotools.api.data.SimpleFeatureStore
@@ -14,18 +13,22 @@ import dev.a4i.bsc.etl.configuration.PostGISDataStore
 
 class PostGISFeatureWriterService(dataStore: PostGISDataStore):
 
-  def write(tableName: String, featureCollection: SimpleFeatureCollection): ZIO[Scope, IOException, Unit] =
+  def write(tableName: String, featureCollection: SimpleFeatureCollection): URIO[Scope, Unit] =
     for
       featureType   = getTargetFeatureType(tableName, featureCollection.getSchema)
       _            <- createSchema(featureType)
-      featureStore <- ZIO.attemptBlockingIO:
-                        dataStore
-                          .getFeatureSource(tableName)
-                          .asInstanceOf[SimpleFeatureStore]
+      featureStore <- ZIO
+                        .attemptBlocking:
+                          dataStore
+                            .getFeatureSource(tableName)
+                            .asInstanceOf[SimpleFeatureStore]
+                        .orDie
       _            <- usingTransaction: transaction =>
-                        ZIO.attemptBlockingIO:
-                          featureStore.setTransaction(transaction)
-                          featureStore.addFeatures(featureCollection)
+                        ZIO
+                          .attemptBlocking:
+                            featureStore.setTransaction(transaction)
+                            featureStore.addFeatures(featureCollection)
+                          .orDie
     yield ()
 
   private def getTargetFeatureType(tableName: String, sourceFeatureType: SimpleFeatureType): SimpleFeatureType =
@@ -35,10 +38,12 @@ class PostGISFeatureWriterService(dataStore: PostGISDataStore):
     featureTypeBuilder.setName(tableName)
     featureTypeBuilder.buildFeatureType
 
-  private def createSchema(featureType: SimpleFeatureType): IO[IOException, Unit] =
-    ZIO.attemptBlockingIO:
-      if !dataStore.getTypeNames.contains(featureType.getTypeName)
-      then dataStore.createSchema(featureType)
+  private def createSchema(featureType: SimpleFeatureType): UIO[Unit] =
+    ZIO
+      .attemptBlocking:
+        if !dataStore.getTypeNames.contains(featureType.getTypeName)
+        then dataStore.createSchema(featureType)
+      .orDie
 
   private def usingTransaction[R, E, A](use: DefaultTransaction => ZIO[R, E, A]): ZIO[R, E, A] =
     val acquire: UIO[DefaultTransaction] = ZIO.succeed(DefaultTransaction(UUID.randomUUID.toString))

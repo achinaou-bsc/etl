@@ -21,8 +21,8 @@ class WADAridityETL(
     aridityLoadingService: WADAridityLoadingService
 ):
 
-  def etl: Task[Unit] =
-    val workflow: RIO[Workspace, Unit] =
+  def etl: UIO[Unit] =
+    val workflow: URIO[Workspace, Unit] =
       for
         _                      <- ZIO.log("ETL / WAD / Aridity: Extracting...")
         aridityRasterDirectory <- extractionService.extract(WADDataSources.aridity)

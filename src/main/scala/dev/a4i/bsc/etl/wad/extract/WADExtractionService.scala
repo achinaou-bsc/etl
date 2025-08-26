@@ -14,7 +14,7 @@ class WADExtractionService(
     unarchivingService: UnarchivingService
 ) extends ExtractionService:
 
-  def extract(url: URL): RIO[Workspace, Path] =
+  def extract(url: URL): URIO[Workspace, Path] =
     for
       workspace <- ZIO.service[Workspace]
       archive   <- downloadService.download(url, workspace.path)

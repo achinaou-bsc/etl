@@ -12,7 +12,7 @@ class WADAridityLoadingService(
     postGISFeatureWriterService: PostGISFeatureWriterService
 ) extends LoadingService:
 
-  def load(vectorFile: Path): Task[Unit] =
+  def load(vectorFile: Path): UIO[Unit] =
     ZIO.scoped:
       for
         featureCollection <- vectorReaderService.read(vectorFile)

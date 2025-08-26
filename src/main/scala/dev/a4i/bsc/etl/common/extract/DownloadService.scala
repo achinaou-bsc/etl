@@ -9,10 +9,10 @@ import dev.a4i.bsc.etl.configuration.HttpClient
 
 class DownloadService(client: HttpClient):
 
-  def download(url: URL, outputDirectory: Path): Task[Path] =
+  def download(url: URL, outputDirectory: Path): UIO[Path] =
     ZIO.scoped:
       for
-        response     <- client.request(Request.get(url))
+        response     <- client.request(Request.get(url)).orDie
         filenameRegex = """.*; ?filename="?(.*)"?""".r
         archiveName   = response.headers
                           .get("Content-Disposition")
@@ -21,7 +21,7 @@ class DownloadService(client: HttpClient):
                             case _                       => None
                           .getOrElse(url.path.segments.last)
         archive       = outputDirectory / archiveName
-        _            <- response.body.asStream.run(ZSink.fromPath(archive.toNIO))
+        _            <- response.body.asStream.run(ZSink.fromPath(archive.toNIO)).orDie
       yield archive
 
 object DownloadService:

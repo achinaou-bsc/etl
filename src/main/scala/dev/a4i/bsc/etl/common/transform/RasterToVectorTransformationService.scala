@@ -4,14 +4,13 @@ import scala.jdk.CollectionConverters.*
 
 import org.geotools.coverage.grid.GridCoverage2D
 import org.geotools.data.simple.SimpleFeatureCollection
-import org.geotools.process.ProcessException
 import org.geotools.process.raster.PolygonExtractionProcess
 import org.jaitools.numeric.Range
 import zio.*
 
 class RasterToVectorTransformationService:
 
-  def transform(coverage: GridCoverage2D): IO[ProcessException, SimpleFeatureCollection] =
+  def transform(coverage: GridCoverage2D): UIO[SimpleFeatureCollection] =
     val noDataValues: List[Number] =
       coverage
         .getSampleDimension(0)
@@ -22,7 +21,7 @@ class RasterToVectorTransformationService:
     val classificationRanges: List[Range[Integer]] = List()
 
     ZIO
-      .attempt:
+      .attemptBlocking:
         PolygonExtractionProcess().execute(
           coverage,
           0,
@@ -32,7 +31,7 @@ class RasterToVectorTransformationService:
           classificationRanges.asJava,
           null
         )
-      .refineToOrDie[ProcessException]
+      .orDie
 
 object RasterToVectorTransformationService:
 

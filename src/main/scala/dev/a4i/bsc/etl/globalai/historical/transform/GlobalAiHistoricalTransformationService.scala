@@ -1,6 +1,5 @@
 package dev.a4i.bsc.etl.globalai.historical.transform
 
-import java.io.IOException
 import java.time.Month
 import scala.jdk.CollectionConverters.*
 
@@ -13,7 +12,6 @@ import org.geotools.data.simple.SimpleFeatureIterator
 import org.geotools.feature.collection.DecoratingSimpleFeatureCollection
 import org.geotools.feature.simple.SimpleFeatureBuilder
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder
-import org.geotools.process.ProcessException
 import org.geotools.referencing.CRS
 import os.*
 import zio.*
@@ -35,7 +33,7 @@ class GlobalAiHistoricalTransformationService(
       metadata: GlobalAiHistoricalMetadata[Monthly],
       rasterFile: Path,
       geoJSONFile: Path
-  ): IO[IOException | ProcessException, (Path, GlobalAiHistoricalMetadata[Monthly])] =
+  ): UIO[(Path, GlobalAiHistoricalMetadata[Monthly])] =
     ZIO.scoped:
       for
         coverage                     <- rasterReaderService.read(rasterFile)
@@ -45,17 +43,19 @@ class GlobalAiHistoricalTransformationService(
         _                            <- geoJSONWriterService.write(geoJSONFile, featureCollectionWithMetadata)
       yield (geoJSONFile, metadata)
 
-  private def patch(coverage: GridCoverage2D): IO[IOException, GridCoverage2D] =
-    ZIO.attemptBlockingIO:
-      GridCoverageFactory().create(
-        s"${coverage.getName().toString}-patched",
-        coverage.getRenderedImage,
-        CRS.decode("EPSG:4326", /* longitudeFirst */ true),
-        coverage.getGridGeometry.getGridToCRS,
-        coverage.getSampleDimensions,
-        Array.empty,
-        Map.empty.asJava
-      )
+  private def patch(coverage: GridCoverage2D): UIO[GridCoverage2D] =
+    ZIO
+      .attemptBlocking:
+        GridCoverageFactory().create(
+          s"${coverage.getName().toString}-patched",
+          coverage.getRenderedImage,
+          CRS.decode("EPSG:4326", /* longitudeFirst */ true),
+          coverage.getGridGeometry.getGridToCRS,
+          coverage.getSampleDimensions,
+          Array.empty,
+          Map.empty.asJava
+        )
+      .orDie
 
   private def migrate(
       metadata: GlobalAiHistoricalMetadata[Monthly],
@@ -70,7 +70,7 @@ class GlobalAiHistoricalTransformationService(
       private val monthAttributeValue: Int   = metadata.period match
         case Monthly(month: Month) => month.getValue
 
-      override val getSchema: SimpleFeatureType =
+      override lazy val getSchema: SimpleFeatureType =
         val featureTypeBuilder: SimpleFeatureTypeBuilder = SimpleFeatureTypeBuilder()
 
         featureTypeBuilder.init(delegate.getSchema)

@@ -1,6 +1,5 @@
 package dev.a4i.bsc.etl.globalai.historical
 
-import java.io.IOException
 import java.time.Month
 import java.util.Locale
 
@@ -30,8 +29,8 @@ class GlobalAiHistoricalETL(
     loadingService: GlobalAiHistoricalLoadingService
 ):
 
-  def etl: Task[Unit] =
-    val workflow: RIO[Workspace, Unit] =
+  def etl: UIO[Unit] =
+    val workflow: URIO[Workspace, Unit] =
       for
         (url, metadata)  = GlobalAiHistoricalDataSource.dataSource
         _               <- ZIO.log("ETL / GlobalAi / Historical: Extracting...")
@@ -56,27 +55,29 @@ class GlobalAiHistoricalETL(
   private def findRasterFiles(
       directory: Path,
       metadata: GlobalAiHistoricalMetadata[Annual]
-  ): IO[IOException, Seq[(Path, GlobalAiHistoricalMetadata[Monthly])]] =
+  ): UIO[Seq[(Path, GlobalAiHistoricalMetadata[Monthly])]] =
     val extensions: Set[String] = Set("tif", "tiff")
 
-    ZIO.attemptBlockingIO:
-      walk(directory)
-        .filter(isFile)
-        .filter(file => extensions.contains(file.ext.toLowerCase(Locale.ROOT)))
-        .sorted
-        .map(file =>
-          (
-            file,
-            metadata.copy(period = Monthly(Month.of(file.baseName.split("_").last.toInt)))
+    ZIO
+      .attemptBlocking:
+        walk(directory)
+          .filter(isFile)
+          .filter(file => extensions.contains(file.ext.toLowerCase(Locale.ROOT)))
+          .sorted
+          .map(file =>
+            (
+              file,
+              metadata.copy(period = Monthly(Month.of(file.baseName.split("_").last.toInt)))
+            )
           )
-        )
-        .take(1) // FIXME: Delete
+          .take(1) // FIXME: Delete
+      .orDie
 
-  private def createVectorDirectory(rasterDirectory: Path): ZIO[Workspace, IOException, Path] =
+  private def createVectorDirectory(rasterDirectory: Path): URIO[Workspace, Path] =
     for
       workspace      <- ZIO.service[Workspace]
       vectorDirectory = workspace.path / s"${rasterDirectory.last}.vector"
-      _              <- ZIO.attemptBlockingIO(makeDir.all(vectorDirectory))
+      _              <- ZIO.attemptBlocking(makeDir.all(vectorDirectory)).orDie
     yield vectorDirectory
 
 object GlobalAiHistoricalETL:
