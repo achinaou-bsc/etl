@@ -5,7 +5,7 @@ import zio.logging.backend.SLF4J
 
 import dev.a4i.bsc.etl.configuration.HttpClient
 import dev.a4i.bsc.etl.configuration.PostGISDataStore
-import dev.a4i.bsc.etl.wad.aridity.WADAridityETL
+import dev.a4i.bsc.etl.globalai.historical.GlobalAiHistoricalETL
 import dev.a4i.bsc.etl.worldclim.historical.temperature.WorldClimHistoricalTemperatureETL
 
 object Application extends ZIOAppDefault:
@@ -18,14 +18,14 @@ object Application extends ZIOAppDefault:
       .provide(
         HttpClient.layer,
         PostGISDataStore.layer,
-        WADAridityETL.layer,
-        WorldClimHistoricalTemperatureETL.layer
+        WorldClimHistoricalTemperatureETL.layer,
+        GlobalAiHistoricalETL.layer
       )
       .unit
 
-  private lazy val program: ZIO[WADAridityETL & WorldClimHistoricalTemperatureETL, Throwable, Unit] =
+  private lazy val program: ZIO[WorldClimHistoricalTemperatureETL & GlobalAiHistoricalETL, Throwable, Unit] =
     for
-      _ <- ZIO.serviceWithZIO[WADAridityETL](_.etl)
-      _ <- ZIO.serviceWithZIO[WorldClimHistoricalTemperatureETL](_.etl)
+      // _ <- ZIO.serviceWithZIO[WorldClimHistoricalTemperatureETL](_.etl)
+      _ <- ZIO.serviceWithZIO[GlobalAiHistoricalETL](_.etl)
       _ <- ZIO.log("ETL: Done")
     yield ()

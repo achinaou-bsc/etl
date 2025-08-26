@@ -13,7 +13,7 @@ class DownloadService(client: HttpClient):
     ZIO.scoped:
       for
         response     <- client.request(Request.get(url))
-        filenameRegex = """.*; filename="?(.*)"?""".r
+        filenameRegex = """.*; ?filename="?(.*)"?""".r
         archiveName   = response.headers
                           .get("Content-Disposition")
                           .flatMap:

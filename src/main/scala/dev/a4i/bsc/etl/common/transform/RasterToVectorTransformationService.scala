@@ -12,6 +12,13 @@ import zio.*
 class RasterToVectorTransformationService:
 
   def transform(coverage: GridCoverage2D): IO[ProcessException, SimpleFeatureCollection] =
+    val noDataValues: List[Number] =
+      coverage
+        .getSampleDimension(0)
+        .getNoDataValues
+        .map(_.asInstanceOf[Number])
+        .toList
+
     val classificationRanges: List[Range[Integer]] = List()
 
     ZIO
@@ -21,7 +28,7 @@ class RasterToVectorTransformationService:
           0,
           true,
           null,
-          List.empty.asJava,
+          noDataValues.asJava,
           classificationRanges.asJava,
           null
         )

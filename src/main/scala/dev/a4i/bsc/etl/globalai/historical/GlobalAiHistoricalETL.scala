@@ -1,4 +1,4 @@
-package dev.a4i.bsc.etl.worldclim.historical.temperature
+package dev.a4i.bsc.etl.globalai.historical
 
 import java.io.IOException
 import java.time.Month
@@ -17,37 +17,37 @@ import dev.a4i.bsc.etl.common.transform.RasterToVectorTransformationService
 import dev.a4i.bsc.etl.common.transform.VectorReaderService
 import dev.a4i.bsc.etl.configuration.HttpClient
 import dev.a4i.bsc.etl.configuration.PostGISDataStore
-import dev.a4i.bsc.etl.worldclim.historical.extract.WorldClimHistoricalExtractionService
-import dev.a4i.bsc.etl.worldclim.historical.temperature.common.WorldClimHistoricalTemperatureMetadata
-import dev.a4i.bsc.etl.worldclim.historical.temperature.common.WorldClimHistoricalTemperatureMetadata.Period.*
-import dev.a4i.bsc.etl.worldclim.historical.temperature.extract.WorldClimHistoricalTemperatureDataSource
-import dev.a4i.bsc.etl.worldclim.historical.temperature.load.WorldClimHistoricalTemperatureLoadingService
-import dev.a4i.bsc.etl.worldclim.historical.temperature.transform.WorldClimHistoricalTemperatureTransformationService
+import dev.a4i.bsc.etl.globalai.historical.common.GlobalAiHistoricalMetadata
+import dev.a4i.bsc.etl.globalai.historical.common.GlobalAiHistoricalMetadata.Period.*
+import dev.a4i.bsc.etl.globalai.historical.extract.GlobalAiHistoricalDataSource
+import dev.a4i.bsc.etl.globalai.historical.extract.GlobalAiHistoricalExtractionService
+import dev.a4i.bsc.etl.globalai.historical.load.GlobalAiHistoricalLoadingService
+import dev.a4i.bsc.etl.globalai.historical.transform.GlobalAiHistoricalTransformationService
 
-class WorldClimHistoricalTemperatureETL(
-    extractionService: WorldClimHistoricalExtractionService,
-    transformationService: WorldClimHistoricalTemperatureTransformationService,
-    loadingService: WorldClimHistoricalTemperatureLoadingService
+class GlobalAiHistoricalETL(
+    extractionService: GlobalAiHistoricalExtractionService,
+    transformationService: GlobalAiHistoricalTransformationService,
+    loadingService: GlobalAiHistoricalLoadingService
 ):
 
   def etl: Task[Unit] =
     val workflow: RIO[Workspace, Unit] =
       for
-        (url, metadata)  = WorldClimHistoricalTemperatureDataSource.averagePerThirtySeconds
-        _               <- ZIO.log("ETL / WorldClim / Historical / Temperature: Extracting...")
+        (url, metadata)  = GlobalAiHistoricalDataSource.dataSource
+        _               <- ZIO.log("ETL / GlobalAi / Historical: Extracting...")
         rasterDirectory <- extractionService.extract(url)
         rasterFiles     <- findRasterFiles(rasterDirectory, metadata)
         vectorDirectory <- createVectorDirectory(rasterDirectory)
-        _               <- ZIO.log("ETL / WorldClim / Historical / Temperature: Transforming...")
+        _               <- ZIO.log("ETL / GlobalAi / Historical: Transforming...")
         vectorFiles     <- ZIO.foreach(rasterFiles): (rasterFile, metadata) =>
                              val Monthly(month)    = metadata.period
                              val geoJSONFile: Path = vectorDirectory / s"${rasterFile.baseName}.geojson"
 
-                             ZIO.log(s"ETL / WorldClim / Historical / Temperature: Transforming ${month}...")
+                             ZIO.log(s"ETL / GlobalAi / Historical: Transforming ${month}...")
                                *> transformationService.transform(metadata, rasterFile, geoJSONFile)
-        _               <- ZIO.log("ETL / WorldClim / Historical / Temperature: Loading...")
+        _               <- ZIO.log("ETL / GlobalAi / Historical: Loading...")
         _               <- ZIO.foreachDiscard(vectorFiles): (vectorFile, metadata) =>
-                             ZIO.log(s"ETL / WorldClim / Historical / Temperature: Loading ${vectorFile}...")
+                             ZIO.log(s"ETL / GlobalAi / Historical: Loading ${vectorFile}...")
                                *> loadingService.load(metadata, vectorFile)
       yield ()
 
@@ -55,8 +55,8 @@ class WorldClimHistoricalTemperatureETL(
 
   private def findRasterFiles(
       directory: Path,
-      metadata: WorldClimHistoricalTemperatureMetadata[Annual]
-  ): IO[IOException, Seq[(Path, WorldClimHistoricalTemperatureMetadata[Monthly])]] =
+      metadata: GlobalAiHistoricalMetadata[Annual]
+  ): IO[IOException, Seq[(Path, GlobalAiHistoricalMetadata[Monthly])]] =
     val extensions: Set[String] = Set("tif", "tiff")
 
     ZIO.attemptBlockingIO:
@@ -70,6 +70,7 @@ class WorldClimHistoricalTemperatureETL(
             metadata.copy(period = Monthly(Month.of(file.baseName.split("_").last.toInt)))
           )
         )
+        .take(1) // FIXME: Delete
 
   private def createVectorDirectory(rasterDirectory: Path): ZIO[Workspace, IOException, Path] =
     for
@@ -78,12 +79,12 @@ class WorldClimHistoricalTemperatureETL(
       _              <- ZIO.attemptBlockingIO(makeDir.all(vectorDirectory))
     yield vectorDirectory
 
-object WorldClimHistoricalTemperatureETL:
+object GlobalAiHistoricalETL:
 
   type Dependencies = HttpClient & PostGISDataStore
 
-  val layer: URLayer[Dependencies, WorldClimHistoricalTemperatureETL] =
-    ZLayer.makeSome[Dependencies, WorldClimHistoricalTemperatureETL](
+  val layer: URLayer[Dependencies, GlobalAiHistoricalETL] =
+    ZLayer.makeSome[Dependencies, GlobalAiHistoricalETL](
       DownloadService.layer,
       GeoJSONWriterService.layer,
       PostGISFeatureWriterService.layer,
@@ -91,8 +92,8 @@ object WorldClimHistoricalTemperatureETL:
       RasterToVectorTransformationService.layer,
       UnarchivingService.layer,
       VectorReaderService.layer,
-      WorldClimHistoricalExtractionService.layer,
-      WorldClimHistoricalTemperatureTransformationService.layer,
-      WorldClimHistoricalTemperatureLoadingService.layer,
-      ZLayer.derive[WorldClimHistoricalTemperatureETL]
+      GlobalAiHistoricalExtractionService.layer,
+      GlobalAiHistoricalTransformationService.layer,
+      GlobalAiHistoricalLoadingService.layer,
+      ZLayer.derive[GlobalAiHistoricalETL]
     )
