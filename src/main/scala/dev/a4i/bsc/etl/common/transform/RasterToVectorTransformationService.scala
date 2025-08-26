@@ -16,7 +16,7 @@ class RasterToVectorTransformationService:
       classificationRanges: Seq[Range[Integer]] = Seq.empty
   ): UIO[SimpleFeatureCollection] =
     ZIO
-      .attemptBlocking:
+      .attemptBlockingInterrupt:
         val effectiveNoDataValues: Seq[Number] =
           if noDataValues.nonEmpty
           then noDataValues
