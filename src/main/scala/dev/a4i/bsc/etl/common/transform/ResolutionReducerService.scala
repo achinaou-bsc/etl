@@ -1,8 +1,8 @@
 package dev.a4i.bsc.etl.common.transform
 
 import java.awt.image.RenderedImage
+import java.awt.image.renderable.ParameterBlock
 import javax.media.jai.JAI
-import javax.media.jai.ParameterBlockJAI
 
 import org.geotools.coverage.grid.GridCoverage2D
 import org.geotools.coverage.grid.GridCoverageFactory
@@ -10,15 +10,15 @@ import zio.*
 
 class ResolutionReducerService:
 
-  def downsampleByAveraging(coverage: GridCoverage2D, scaleFactor: Int): UIO[GridCoverage2D] =
+  def downsampleByAveraging(coverage: GridCoverage2D, scaleFactor: Double): UIO[GridCoverage2D] =
     ZIO
       .attemptBlocking:
         val image: RenderedImage = coverage.getRenderedImage
 
-        val parameterBlock: ParameterBlockJAI = new ParameterBlockJAI("SubsampleAverage"):
+        val parameterBlock: ParameterBlock = new ParameterBlock:
           addSource(image)
-          setParameter("scaleX", scaleFactor)
-          setParameter("scaleY", scaleFactor)
+          add(scaleFactor)
+          add(scaleFactor)
 
         val downsampledImage = JAI.create("SubsampleAverage", parameterBlock)
 
