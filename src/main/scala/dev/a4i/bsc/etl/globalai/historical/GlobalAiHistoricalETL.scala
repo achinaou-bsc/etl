@@ -44,10 +44,10 @@ class GlobalAiHistoricalETL(
 
                              ZIO.log(s"ETL / Global Aridity Index / Historical: Transforming ${month}...")
                                *> transformationService.transform(metadata, rasterFile, geoJSONFile)
-        _               <- ZIO.log("ETL / Global Aridity Index / Historical: Loading...")
-        _               <- ZIO.foreachDiscard(vectorFiles): (vectorFile, metadata) =>
-                             ZIO.log(s"ETL / Global Aridity Index / Historical: Loading ${vectorFile}...")
-                               *> loadingService.load(metadata, vectorFile)
+        // _               <- ZIO.log("ETL / Global Aridity Index / Historical: Loading...") // FIXME: Uncomment
+        // _               <- ZIO.foreachDiscard(vectorFiles): (vectorFile, metadata) =>
+        //                      ZIO.log(s"ETL / Global Aridity Index / Historical: Loading ${vectorFile}...")
+        //                        *> loadingService.load(metadata, vectorFile)
       yield ()
 
     workflow.provide(Workspace.layer)
