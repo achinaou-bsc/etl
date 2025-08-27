@@ -36,21 +36,15 @@ class GlobalAiHistoricalTransformationService(
       rasterFile: Path,
       geoJSONFile: Path
   ): UIO[(Path, GlobalAiHistoricalMetadata[Monthly])] =
-    val noDataValues: Seq[Number] = Seq(0) // Assuming 0 is the no-data value for Global AI dataset
+    val noDataValues: Seq[Number] = Seq(0)
 
     ZIO.scoped:
       for
-        _                            <- ZIO.log("Reading Raster...")
         coverage                     <- rasterReaderService.read(rasterFile)
-        _                            <- ZIO.log("Patching Raster...")
         patchedCoverage              <- patch(coverage)
-        _                            <- ZIO.log("Reducing Resolution...")
         reducedCoverage              <- resolutionReducerService.downsampleByAveraging(patchedCoverage, 10)
-        _                            <- ZIO.log("Converting to Vector...")
         featureCollection            <- rasterToVectorTransformationService.transform(reducedCoverage, noDataValues)
-        _                            <- ZIO.log("Decorating...")
         featureCollectionWithMetadata = migrate(metadata, featureCollection)
-        _                            <- ZIO.log("Writing...")
         _                            <- geoJSONWriterService.write(geoJSONFile, featureCollectionWithMetadata)
       yield (geoJSONFile, metadata)
 
