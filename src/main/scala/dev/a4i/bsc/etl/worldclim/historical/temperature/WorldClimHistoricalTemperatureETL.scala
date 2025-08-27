@@ -70,7 +70,6 @@ class WorldClimHistoricalTemperatureETL(
               metadata.copy(period = Monthly(Month.of(file.baseName.split("_").last.toInt)))
             )
           )
-          .take(1)
       .orDie
 
   private def createVectorDirectory(rasterDirectory: Path): URIO[Workspace, Path] =
