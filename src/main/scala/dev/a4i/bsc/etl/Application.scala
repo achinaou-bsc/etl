@@ -23,9 +23,9 @@ object Application extends ZIOAppDefault:
       )
       .unit
 
-  private lazy val program: ZIO[WorldClimHistoricalTemperatureETL & GlobalAiHistoricalETL, Throwable, Unit] =
+  private lazy val program: URIO[WorldClimHistoricalTemperatureETL & GlobalAiHistoricalETL, Unit] =
     for
-      // _ <- ZIO.serviceWithZIO[WorldClimHistoricalTemperatureETL](_.etl)
+      _ <- ZIO.serviceWithZIO[WorldClimHistoricalTemperatureETL](_.etl)
       _ <- ZIO.serviceWithZIO[GlobalAiHistoricalETL](_.etl)
       _ <- ZIO.log("ETL: Done")
     yield ()

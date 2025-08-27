@@ -45,7 +45,7 @@ class GlobalAiHistoricalTransformationService(
         _                            <- ZIO.log("Patching Raster...")
         patchedCoverage              <- patch(coverage)
         _                            <- ZIO.log("Reducing Resolution...")
-        reducedCoverage               <- resolutionReducerService.downsampleByAveraging(patchedCoverage, 10)
+        reducedCoverage              <- resolutionReducerService.downsampleByAveraging(patchedCoverage, 10)
         _                            <- ZIO.log("Converting to Vector...")
         featureCollection            <- rasterToVectorTransformationService.transform(reducedCoverage, noDataValues)
         _                            <- ZIO.log("Decorating...")

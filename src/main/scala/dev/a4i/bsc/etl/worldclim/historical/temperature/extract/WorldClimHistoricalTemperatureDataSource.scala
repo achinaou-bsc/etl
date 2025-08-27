@@ -25,7 +25,8 @@ object WorldClimHistoricalTemperatureDataSource:
 
   val averagePerFiveMinutes: WorldClimHistoricalTemperatureDataSource =
     (
-      url = URL.decode("https://geodata.ucdavis.edu/climate/worldclim/2_1/base/wc2.1_5m_tavg.zip").getOrElse(???),
+      // url = URL.decode("https://geodata.ucdavis.edu/climate/worldclim/2_1/base/wc2.1_5m_tavg.zip").getOrElse(???),
+      url = URL.decode("http://localhost:9000/wc2.1_5m_tavg.zip").getOrElse(???), // FIXME: Delete
       metadata = WorldClimHistoricalTemperatureMetadata(
         Indicator.Average,
         300,

@@ -13,6 +13,7 @@ import dev.a4i.bsc.etl.common.load.PostGISFeatureWriterService
 import dev.a4i.bsc.etl.common.transform.GeoJSONWriterService
 import dev.a4i.bsc.etl.common.transform.RasterReaderService
 import dev.a4i.bsc.etl.common.transform.RasterToVectorTransformationService
+import dev.a4i.bsc.etl.common.transform.ResolutionReducerService
 import dev.a4i.bsc.etl.common.transform.VectorReaderService
 import dev.a4i.bsc.etl.configuration.HttpClient
 import dev.a4i.bsc.etl.configuration.PostGISDataStore
@@ -22,7 +23,6 @@ import dev.a4i.bsc.etl.globalai.historical.extract.GlobalAiHistoricalDataSource
 import dev.a4i.bsc.etl.globalai.historical.extract.GlobalAiHistoricalExtractionService
 import dev.a4i.bsc.etl.globalai.historical.load.GlobalAiHistoricalLoadingService
 import dev.a4i.bsc.etl.globalai.historical.transform.GlobalAiHistoricalTransformationService
-import dev.a4i.bsc.etl.common.transform.ResolutionReducerService
 
 class GlobalAiHistoricalETL(
     extractionService: GlobalAiHistoricalExtractionService,
@@ -45,10 +45,10 @@ class GlobalAiHistoricalETL(
 
                              ZIO.log(s"ETL / Global Aridity Index / Historical: Transforming ${month}...")
                                *> transformationService.transform(metadata, rasterFile, geoJSONFile)
-        // _               <- ZIO.log("ETL / Global Aridity Index / Historical: Loading...") // FIXME: Uncomment
-        // _               <- ZIO.foreachDiscard(vectorFiles): (vectorFile, metadata) =>
-        //                      ZIO.log(s"ETL / Global Aridity Index / Historical: Loading ${vectorFile}...")
-        //                        *> loadingService.load(metadata, vectorFile)
+        _               <- ZIO.log("ETL / Global Aridity Index / Historical: Loading...")
+        _               <- ZIO.foreachDiscard(vectorFiles): (vectorFile, metadata) =>
+                             ZIO.log(s"ETL / Global Aridity Index / Historical: Loading ${vectorFile}...")
+                               *> loadingService.load(metadata, vectorFile)
       yield ()
 
     workflow.provide(Workspace.layer)
@@ -71,7 +71,6 @@ class GlobalAiHistoricalETL(
               metadata.copy(period = Monthly(Month.of(file.baseName.split("_").last.toInt)))
             )
           )
-          .take(1) // FIXME: Delete
       .orDie
 
   private def createVectorDirectory(rasterDirectory: Path): URIO[Workspace, Path] =
