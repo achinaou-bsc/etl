@@ -30,13 +30,13 @@ class GlobalAiHistoricalETL(
     loadingService: GlobalAiHistoricalLoadingService
 ):
 
-  def etl: UIO[Unit] =
+  def etl(months: Seq[Month]): UIO[Unit] =
     val workflow: URIO[Workspace, Unit] =
       for
         (url, metadata)  = GlobalAiHistoricalDataSource.dataSource
         _               <- ZIO.log("ETL / Global Aridity Index / Historical: Extracting...")
         rasterDirectory <- extractionService.extract(url)
-        rasterFiles     <- findRasterFiles(rasterDirectory, metadata)
+        rasterFiles     <- findRasterFiles(rasterDirectory, metadata, months)
         vectorDirectory <- createVectorDirectory(rasterDirectory)
         _               <- ZIO.log("ETL / Global Aridity Index / Historical: Transforming...")
         vectorFiles     <- ZIO.foreach(rasterFiles): (rasterFile, metadata) =>
@@ -55,7 +55,8 @@ class GlobalAiHistoricalETL(
 
   private def findRasterFiles(
       directory: Path,
-      metadata: GlobalAiHistoricalMetadata[Annual]
+      metadata: GlobalAiHistoricalMetadata[Annual],
+      months: Seq[Month]
   ): UIO[Seq[(Path, GlobalAiHistoricalMetadata[Monthly])]] =
     val extensions: Set[String] = Set("tif", "tiff")
 
@@ -71,6 +72,7 @@ class GlobalAiHistoricalETL(
               metadata.copy(period = Monthly(Month.of(file.baseName.split("_").last.toInt)))
             )
           )
+          .filter((_, metadata) => months.contains(metadata.period.month))
       .orDie
 
   private def createVectorDirectory(rasterDirectory: Path): URIO[Workspace, Path] =

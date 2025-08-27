@@ -29,13 +29,13 @@ class WorldClimHistoricalTemperatureETL(
     loadingService: WorldClimHistoricalTemperatureLoadingService
 ):
 
-  def etl: UIO[Unit] =
+  def etl(months: Seq[Month]): UIO[Unit] =
     val workflow: URIO[Workspace, Unit] =
       for
         (url, metadata)  = WorldClimHistoricalTemperatureDataSource.averagePerFiveMinutes
         _               <- ZIO.log("ETL / WorldClim / Historical / Temperature: Extracting...")
         rasterDirectory <- extractionService.extract(url)
-        rasterFiles     <- findRasterFiles(rasterDirectory, metadata)
+        rasterFiles     <- findRasterFiles(rasterDirectory, metadata, months)
         vectorDirectory <- createVectorDirectory(rasterDirectory)
         _               <- ZIO.log("ETL / WorldClim / Historical / Temperature: Transforming...")
         vectorFiles     <- ZIO.foreach(rasterFiles): (rasterFile, metadata) =>
@@ -54,7 +54,8 @@ class WorldClimHistoricalTemperatureETL(
 
   private def findRasterFiles(
       directory: Path,
-      metadata: WorldClimHistoricalTemperatureMetadata[Annual]
+      metadata: WorldClimHistoricalTemperatureMetadata[Annual],
+      months: Seq[Month]
   ): UIO[Seq[(Path, WorldClimHistoricalTemperatureMetadata[Monthly])]] =
     val extensions: Set[String] = Set("tif", "tiff")
 
@@ -70,6 +71,7 @@ class WorldClimHistoricalTemperatureETL(
               metadata.copy(period = Monthly(Month.of(file.baseName.split("_").last.toInt)))
             )
           )
+          .filter((_, metadata) => months.contains(metadata.period.month))
       .orDie
 
   private def createVectorDirectory(rasterDirectory: Path): URIO[Workspace, Path] =

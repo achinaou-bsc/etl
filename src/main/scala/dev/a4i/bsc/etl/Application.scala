@@ -1,5 +1,7 @@
 package dev.a4i.bsc.etl
 
+import java.time.Month
+
 import zio.*
 import zio.logging.backend.SLF4J
 
@@ -24,8 +26,10 @@ object Application extends ZIOAppDefault:
       .unit
 
   private lazy val program: URIO[WorldClimHistoricalTemperatureETL & GlobalAiHistoricalETL, Unit] =
+    val months: Seq[Month] = Seq(Month.AUGUST)
+
     for
-      _ <- ZIO.serviceWithZIO[WorldClimHistoricalTemperatureETL](_.etl)
-      _ <- ZIO.serviceWithZIO[GlobalAiHistoricalETL](_.etl)
+      _ <- ZIO.serviceWithZIO[WorldClimHistoricalTemperatureETL](_.etl(months))
+      _ <- ZIO.serviceWithZIO[GlobalAiHistoricalETL](_.etl(months))
       _ <- ZIO.log("ETL: Done")
     yield ()
