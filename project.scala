@@ -13,7 +13,7 @@
 //> using dep dev.zio::zio:2.1.20
 //> using dep dev.zio::zio-config-magnolia:4.0.4
 //> using dep dev.zio::zio-streams:2.1.20
-//> using dep dev.zio::zio-http:3.4.0
+//> using dep dev.zio::zio-http:3.4.1
 
 //> using dep com.lihaoyi::os-lib:0.11.5
 
