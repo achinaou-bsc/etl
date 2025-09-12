@@ -33,7 +33,7 @@ jobs:
         uses: coursier/setup-action@v1
         with:
           jvm: temurin:21
-          apps: scala:3.7.2
+          apps: scala:3.7.3
 
       - name: Check Application's Code Formatting
         run: just check-formatting
