@@ -28,7 +28,7 @@ jobs:
         uses: coursier/setup-action@v1
         with:
           jvm: temurin:21
-          apps: scala:3.7.2 sbt:1.10.7
+          apps: scala:3.7.3 sbt:1.10.7
 
       - name: Convert Project to SBT
         run: |
